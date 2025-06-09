@@ -1,5 +1,5 @@
 # Secrets
-secret/
+secret/*
 !secret/.gitkeep
 
 # Byte-compiled / optimized / DLL files
