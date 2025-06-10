@@ -1,0 +1,19 @@
+Each time you turn on SPACE INVADERS you will be at war with
+enemies from space who are threatening the earth. Your
+objective is to destroy these invaders by firing your "laser
+cannon." You must wipe out the invaders either before they
+reach the earth (bottom of the screen), or before they hit you
+three times with their "laser bombs."
+
+Your long-term objective is to score as many points as
+possible. Points are scored each time you hit one of the SPACE
+INVADERS. They are worth different amounts of points,
+depending on their initial position on the screen. (See
+SCORING)
+
+If you  destroy all 36 SPACE INVADERS before they reach the
+earth, a new set of invaders will appear on the screen. Each
+time the invaders are reset on the screen they will start from
+a position closer to the earth until they reach the closest
+position possible. The SPACE INVADERS can be reset on the
+screen indefinitely during a game.

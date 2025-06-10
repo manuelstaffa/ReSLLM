@@ -1,0 +1,4 @@
+You control a chicken that has to cross ten horizontal lanes of a freeway traffic.
+There exist two chickens in the game, you control the left chicken, that starts at the bottom of the road and should go to the top.
+Cars are traveling along the horizontal lanes and you should cross without getting run over by a car.
+The screen height is 160.

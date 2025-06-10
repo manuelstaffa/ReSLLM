@@ -1,0 +1,1 @@
+You control the orange player playing against a computer-controlled blue player. The game follows the rules of tennis.The first player to win at least 6 games with a margin of at least two games wins the match. If the score is tied at 6-6, the first player to go 2 games up wins the match.

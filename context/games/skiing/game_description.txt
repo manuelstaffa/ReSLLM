@@ -1,0 +1,5 @@
+You control a skier (Player), going down a slope who can move sideways.
+The Player is at the top of the screen, staying at the same y position but the other objects of the environments are moving up towards him. 
+The goal is to ski in between the horizontal pairs of flags. 
+There can be up to two pairs of poles on the screen.
+Do not hit a tree or a flag or you'll fall and lose time.
