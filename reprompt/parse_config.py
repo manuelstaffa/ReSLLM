@@ -1,7 +1,8 @@
 import json
 import os
 
-DEFAULT_CONFIG_PATH = os.path.join("RePrompt", "context", "config", "default.json")
+DEFAULT_CONFIG_PATH = os.path.join("context", "config")
+DEFAULT_CONFIG_NAME = "default.json"
 
 
 class ConfigParser:
@@ -18,7 +19,7 @@ class ConfigParser:
             path (str, optional): Path to the JSON config file. If None, uses DEFAULT_CONFIG_PATH.
             overrides (dict, optional): Dictionary of key-value pairs to override values in the loaded config.
         """
-        self.path = path or DEFAULT_CONFIG_PATH
+        self.path = path or DEFAULT_CONFIG_NAME
         self.config = self._load()
         if overrides:
             self._apply_overrides(overrides)
@@ -30,7 +31,14 @@ class ConfigParser:
         Returns:
             dict: Parsed JSON content as a dictionary.
         """
-        with open(self.path, "r") as f:
+        path = self.path
+
+        if not path.endswith(".json"):
+            path += ".json"
+
+        path = os.path.join(DEFAULT_CONFIG_PATH, path)
+
+        with open(path, "r") as f:
             return json.load(f)
 
     def _apply_overrides(self, overrides):
