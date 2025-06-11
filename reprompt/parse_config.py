@@ -6,20 +6,15 @@ DEFAULT_CONFIG_NAME = "default.json"
 
 
 class ConfigParser:
-    """
-    Loads and manages configuration settings from a JSON file, with support for overrides
-    and formatted string substitution using external context variables.
-    """
-
-    def __init__(self, path=None, overrides=None):
+    def __init__(self, path=DEFAULT_CONFIG_PATH, overrides=None):
         """
-        Initialize the ConfigParser.
+        Initialize ConfigParser, load JSON config, and apply optional overrides.
 
         Args:
-            path (str, optional): Path to the JSON config file. If None, uses DEFAULT_CONFIG_PATH.
-            overrides (dict, optional): Dictionary of key-value pairs to override values in the loaded config.
+            path (str): Path to the config JSON file.
+            overrides (dict, optional): Keys and values to override config.
         """
-        self.path = path or DEFAULT_CONFIG_NAME
+        self.path = path
         self.config = self._load()
         if overrides:
             self._apply_overrides(overrides)
@@ -43,34 +38,61 @@ class ConfigParser:
 
     def _apply_overrides(self, overrides):
         """
-        Apply override values to the loaded configuration.
+        Override config values with given dictionary.
 
         Args:
-            overrides (dict): Key-value pairs to override in the configuration.
+            overrides (dict): Keys and values to override.
         """
         for key, value in overrides.items():
             if value is not None:
-                self.config[key] = value
+                # For nested keys, support dot notation in overrides if needed
+                self._set_nested(self.config, key, value)
+
+    def _set_nested(self, d, key, value):
+        """
+        Set a nested dictionary value using dot-separated key.
+
+        Args:
+            d (dict): Dictionary to modify.
+            key (str): Dot-separated key string.
+            value: Value to set.
+        """
+        keys = key.split(".")
+        for k in keys[:-1]:
+            d = d.setdefault(k, {})
+        d[keys[-1]] = value
+
+    def _get_nested(self, d, key):
+        """
+        Retrieve nested dictionary value by dot-separated key.
+
+        Args:
+            d (dict): Dictionary to search.
+            key (str): Dot-separated key string.
+
+        Returns:
+            Value found, or raises KeyError if any key is missing.
+        """
+        keys = key.split(".")
+        for k in keys:
+            d = d[k]
+        return d
 
     def get(self, key, default=None):
         """
-        Retrieve a configuration value by key, supporting dot-separated nested keys.
+        Get a config value by key (supports nested keys).
 
         Args:
-            key (str): Dot-separated key to retrieve (e.g., "api.model").
-            default (any, optional): Value to return if the key does not exist.
+            key (str): Key to look up, dot-separated for nested.
+            default: Default value if key not found.
 
         Returns:
-            any: The corresponding value or the provided default.
+            The config value or default if key missing.
         """
-        keys = key.split(".")
-        value = self.config
-        for k in keys:
-            if isinstance(value, dict) and k in value:
-                value = value[k]
-            else:
-                return default
-        return value
+        try:
+            return self._get_nested(self.config, key)
+        except KeyError:
+            return default
 
     def format(self, key, context=None):
         """
@@ -101,24 +123,40 @@ class ConfigParser:
 
     def __getitem__(self, key):
         """
-        Dictionary-like access to top-level configuration keys.
+        Dict-style access to config values, supports nested keys.
 
         Args:
-            key (str): Key name.
+            key (str): Dot-separated key string.
 
         Returns:
-            any: Value associated with the key.
+            The config value.
 
         Raises:
-            KeyError: If the key does not exist in the configuration.
+            KeyError if key is not found.
         """
-        return self.config[key]
+        return self._get_nested(self.config, key)
+
+    def __contains__(self, key):
+        """
+        Check if a key exists in config (supports nested keys).
+
+        Args:
+            key (str): Dot-separated key string.
+
+        Returns:
+            bool: True if key exists, False otherwise.
+        """
+        try:
+            self._get_nested(self.config, key)
+            return True
+        except KeyError:
+            return False
 
     def __str__(self):
         """
-        Get a pretty-printed JSON string representation of the configuration.
+        Pretty-print the config dictionary.
 
         Returns:
-            str: JSON-formatted string.
+            str: JSON formatted string.
         """
         return json.dumps(self.config, indent=2)

@@ -14,21 +14,23 @@ def main():
 
     args = parser.parse_args()
 
-    overrides = {"model": args.model, "temperature": args.temperature}
+    overrides = {"openai.model": args.model, "openai.temperature": args.temperature}
 
-    cfg = ConfigParser(path=args.config or None, overrides=overrides)
+    config = ConfigParser(path=args.config or None, overrides=overrides)
 
-    print(f"Final Configuration: {cfg}")
+    print(f"Final Configuration: {config}")
     print(
-        f"Using model: {cfg.get('openai_api.model')} with temperature: {cfg.get('openai_api.temperature')}"
+        f"Using model: {config.get('openai.model')} with temperature: {config.get('openai.temperature')}"
     )
 
+    print(f"Env: {config.get('env')}")
+
     context = {
-        "game": "Freeway",
-        "model": cfg.get("openai_api.model"),
-        "temperature": cfg.get("openai_api.temperature"),
+        "game": config.get("env.game"),
+        "model": config["openai"]["temperature"],
+        "temperature": config["openai.temperature"],
     }
-    prompt = cfg.format("prompt.template", context=context)
+    prompt = config.format("prompt.template", context=context)
     print(f"Prompt with context: {prompt}")
 
 
