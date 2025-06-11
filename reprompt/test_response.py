@@ -17,7 +17,7 @@ response = client.chat.completions.create(
         {"role": "system", "content": "You are my helpful assistant."},
         {
             "role": "user",
-            "content": "Give me a list of 5 interesting facts about the history of artificial intelligence.",
+            "content": "Give me a python function to calculate the factorial of a number.",
         },
     ],
     # temperature=1.0,             # Sampling randomness (0.0 to 2.0). Higher → more random.
@@ -39,3 +39,4 @@ response = client.chat.completions.create(
 )
 
 print(response.choices[0].message.content)
+print(response.choices[0].message.content.strip())
