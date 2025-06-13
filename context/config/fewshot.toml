@@ -1,0 +1,52 @@
+[openai]
+model = "gpt-4o"
+temperature = 0.7
+
+[env]
+game = "Freeway"
+
+[prompt]
+template = "Generate reward function for {game} using model {model}."
+system_prompt = """
+You are an expert in reinforcement learning and game design. Your task is to create a reward function for the game {game} using the model {model}. The reward function should be designed to encourage the agent to learn effectively and efficiently.
+"""
+error_prompt = """
+There was an error while generating the reward function for the game {game}. Please check the input parameters and try again.
+"""
+prompt = [
+    """
+    We want to create a reward function for playing the Atari game {game}. As a first step we want to collect functions that are helpful for understanding events that are happening in the game that could be relevant for the reward, i.e., items colliding. In the following there will be existing game objects given, please generate functions that can be used to understand the game state. Please don't use undefined variables or functions.
+
+    Here is the parent game object:
+    {parent_objects}
+
+    Here are the game objects that are relevant for the reward function for this game:
+    {game_objects}
+
+    Here is the description of the game:
+    {game_description}
+
+    The functions should be written in Python and should be compatible with the HackAtari environment, which is based on the OpenAI Gym environment. Please ensure that the functions are well-documented and follow best practices for coding style. The functions should be designed to be used in a reinforcement learning context, where they can be called to retrieve information about the game state.
+    """,
+    """
+    Now use your previously generated functions to create the actual reward function for the game {game}. The reward function should be designed to encourage the agent to learn effectively and efficiently. Please don't use undefined variables or functions.
+
+    Here is the parent game object:
+    {parent_objects}
+
+    Here are the game objects that are relevant for the reward function for this game:
+    {game_objects}
+
+    Here is the description of the game:
+    {game_description}
+
+    The reward function should have the following shape and name:
+    ```python
+    def reward_function(game_objects) -> float:
+        ... 
+        return reward
+    ```
+
+    Please provide a single python file.
+    """,
+]

@@ -8,7 +8,7 @@ General file structure of RePrompt.
 RePrompt
 ├── context
 │   ├── config
-│   │   ├── default.json
+│   │   ├── default.toml
 │   │   └── default.yaml
 │   ├── game_objects.py
 │   └── games
@@ -20,8 +20,8 @@ RePrompt
 │   └── <game>
 │       └── <run>
 │           ├── log.txt
-│           ├── conversation_history.json
-│           ├── config.json
+│           ├── conversation_history.toml
+│           ├── config.toml
 │           └── <game>_reward.py
 ├── reprompt
 │   ├── build_prompt.py
@@ -37,12 +37,12 @@ RePrompt
 
 ## Command Line Arguments
 
-Specified in <config_name>.json, with applicable overrides specified below.
+Specified in <config_name>.toml, with applicable overrides specified below.
 
 | Argument | Type | Default | Description |
 |----------|------|---------|-------------|
 | `` | type | `<content>` | use |
-| `--config` `-c` | str | `<config name, filename, or path (default: default.json)>` | Name of the config file to use |
+| `--config` `-c` | str | `<config name, filename, or path (default: default.toml)>` | Name of the config file to use |
 | `--model` | str | `<openai model (gpt-4o, gpt-4-turbo, gpt-4, gpt-3.5-turbo)>` | The OpenAI model to use |
 
 ## Config Parser
@@ -59,9 +59,9 @@ Access config values:
 ```python
 config.get('<category>')  
 config.get('<category>.<value>')  
-config["<category>"]
-config["<category>"]["<value>"]
-config["<category>.<value>"]
+# config['<category>']
+# config["<category>"]["<value>"]
+# config["<category>.<value>"]
 ```
 
 Custom format:

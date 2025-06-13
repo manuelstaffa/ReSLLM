@@ -1,4 +1,4 @@
-import json
+import tomlkit
 import os
 
 DEFAULT_CONFIG_PATH = os.path.join("context", "config")
@@ -19,10 +19,10 @@ def get_active_config():
 class ConfigParser:
     def __init__(self, path, overrides=None):
         """
-        Initialize ConfigParser, load JSON config, and apply optional overrides.
+        Initialize ConfigParser, load TOML config, and apply optional overrides.
 
         Args:
-            path (str): Path to the config JSON file.
+            path (str): Path to the config TOML file.
             overrides (dict, optional): Keys and values to override config.
         """
         self.path = path
@@ -35,21 +35,21 @@ class ConfigParser:
 
     def _load(self):
         """
-        Load the configuration JSON file.
+        Load the configuration TOML file.
 
         Returns:
-            dict: Parsed JSON content as a dictionary.
+            dict: Parsed TOML content as a tomlkit TOMLDocument.
         """
         path = self.path
 
-        if not path.endswith(".json"):
-            path += ".json"
+        if not path.endswith(".toml"):
+            path += ".toml"
 
         if os.path.sep not in path:
             path = os.path.join(DEFAULT_CONFIG_PATH, path)
 
-        with open(path, "r") as f:
-            return json.load(f)
+        with open(path, "r", encoding="utf-8") as f:
+            return tomlkit.parse(f.read())
 
     def _apply_overrides(self, overrides):
         """
@@ -67,13 +67,15 @@ class ConfigParser:
         Set a nested dictionary value using dot-separated key.
 
         Args:
-            d (dict): Dictionary to modify.
+            d (TOMLDocument or dict): Dictionary to modify.
             key (str): Dot-separated key string.
             value: Value to set.
         """
         keys = key.split(".")
         for k in keys[:-1]:
-            d = d.setdefault(k, {})
+            if k not in d or not isinstance(d[k], dict):
+                d[k] = tomlkit.table()
+            d = d[k]
         d[keys[-1]] = value
 
     def _get_nested(self, d, key):
@@ -81,7 +83,7 @@ class ConfigParser:
         Retrieve nested dictionary value by dot-separated key.
 
         Args:
-            d (dict): Dictionary to search.
+            d (TOMLDocument or dict): Dictionary to search.
             key (str): Dot-separated key string.
 
         Returns:
@@ -118,10 +120,6 @@ class ConfigParser:
 
         Returns:
             str: The formatted string with placeholders replaced by corresponding values.
-
-        Raises:
-            ValueError: If the retrieved value is not a string.
-            KeyError: If required placeholders are missing in context or config.
         """
         value = self.get(key)
         if not isinstance(value, str):
@@ -136,30 +134,9 @@ class ConfigParser:
         return value.format(**combined_context)
 
     def __getitem__(self, key):
-        """
-        Access to config values.
-
-        Args:
-            key (str): Dot-separated key string.
-
-        Returns:
-            The config value.
-
-        Raises:
-            KeyError if key is not found.
-        """
         return self._get_nested(self.config, key)
 
     def __contains__(self, key):
-        """
-        Check if a key exists in config.
-
-        Args:
-            key (str): Dot-separated key string.
-
-        Returns:
-            bool: True if key exists, False otherwise.
-        """
         try:
             self._get_nested(self.config, key)
             return True
@@ -167,10 +144,4 @@ class ConfigParser:
             return False
 
     def __str__(self):
-        """
-        Pretty-print the config dictionary.
-
-        Returns:
-            str: JSON formatted string.
-        """
-        return json.dumps(self.config, indent=2)
+        return tomlkit.dumps(self.config)
