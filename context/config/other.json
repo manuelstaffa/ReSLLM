@@ -7,6 +7,6 @@
         "game": "Freeway"
     },
     "prompt": {
-        "template": "Generate reward function for {game} using model {model}."
+        "template": "Generate reward function for {game} using model {model} but different."
     }
 }

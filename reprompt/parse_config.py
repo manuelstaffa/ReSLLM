@@ -14,7 +14,7 @@ class ConfigParser:
             path (str): Path to the config JSON file.
             overrides (dict, optional): Keys and values to override config.
         """
-        self.path = path
+        self.path = path or DEFAULT_CONFIG_NAME
         self.config = self._load()
         if overrides:
             self._apply_overrides(overrides)
@@ -31,7 +31,8 @@ class ConfigParser:
         if not path.endswith(".json"):
             path += ".json"
 
-        path = os.path.join(DEFAULT_CONFIG_PATH, path)
+        if not os.path.sep in path:
+            path = os.path.join(DEFAULT_CONFIG_PATH, path)
 
         with open(path, "r") as f:
             return json.load(f)
@@ -79,7 +80,7 @@ class ConfigParser:
 
     def get(self, key, default=None):
         """
-        Get a config value by key (supports nested keys).
+        Get a config value by key.
 
         Args:
             key (str): Key to look up, dot-separated for nested.
@@ -122,7 +123,7 @@ class ConfigParser:
 
     def __getitem__(self, key):
         """
-        Dict-style access to config values, supports nested keys.
+        Access to config values.
 
         Args:
             key (str): Dot-separated key string.
@@ -137,7 +138,7 @@ class ConfigParser:
 
     def __contains__(self, key):
         """
-        Check if a key exists in config (supports nested keys).
+        Check if a key exists in config.
 
         Args:
             key (str): Dot-separated key string.

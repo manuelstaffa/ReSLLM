@@ -15,7 +15,7 @@ def main():
     args = parser.parse_args()
 
     overrides = {"openai.model": args.model, "openai.temperature": args.temperature}
-    config = ConfigParser(path=args.config or None, overrides=overrides)
+    config = ConfigParser(path=args.config, overrides=overrides)
 
     print(f"Final Configuration: {config}")
     print(
