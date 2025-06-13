@@ -1,21 +1,31 @@
-import argparse
-from reprompt.parse_config import ConfigParser
+from reprompt.parse_config import ConfigParser, get_active_config
+import tyro
+from dataclasses import dataclass
+from typing import Optional, Annotated, Literal
+
+
+@dataclass
+class Args:
+    config: Annotated[str, tyro.conf.arg(aliases=["-c"])] = "default.json"
+    """Path to configuration JSON file."""
+
+    model: Optional[Literal["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]] = None
+    """OpenAI model to use."""
+
+    temperature: Optional[float] = None
+    """Temperature for sampling."""
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate reward functions using OpenAI API."
-    )
-    parser.add_argument(
-        "-c", "--config", type=str, help="Path to configuration JSON file."
-    )
-    parser.add_argument("--model", type=str, help="OpenAI model to use.")
-    parser.add_argument("--temperature", type=float, help="Temperature for sampling.")
+    args = tyro.cli(Args)
 
-    args = parser.parse_args()
-
-    overrides = {"openai.model": args.model, "openai.temperature": args.temperature}
-    config = ConfigParser(path=args.config, overrides=overrides)
+    overrides = {
+        "openai.model": args.model,
+        "openai.temperature": args.temperature,
+    }
+    ConfigParser(path=args.config, overrides=overrides)
+    # set_active_config(config)
+    config = get_active_config()
 
     print(f"Final Configuration: {config}")
     print(
@@ -23,10 +33,11 @@ def main():
     )
 
     print(f"Env: {config.get('env')}")
+    print(f"Env: {config["env"]}")
 
     context = {
         "game": config.get("env.game"),
-        "model": config["openai"]["temperature"],
+        "model": config["openai"]["model"],
         "temperature": config["openai.temperature"],
     }
     prompt = config.format("prompt.template", context=context)

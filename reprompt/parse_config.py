@@ -2,11 +2,22 @@ import json
 import os
 
 DEFAULT_CONFIG_PATH = os.path.join("context", "config")
-DEFAULT_CONFIG_NAME = "default.json"
+_active_config = None
+
+
+def _set_active_config(config):
+    global _active_config
+    _active_config = config
+
+
+def get_active_config():
+    if _active_config is None:
+        raise RuntimeError("Config not initialized. Call set_active_config() first.")
+    return _active_config
 
 
 class ConfigParser:
-    def __init__(self, path=DEFAULT_CONFIG_PATH, overrides=None):
+    def __init__(self, path, overrides=None):
         """
         Initialize ConfigParser, load JSON config, and apply optional overrides.
 
@@ -14,10 +25,13 @@ class ConfigParser:
             path (str): Path to the config JSON file.
             overrides (dict, optional): Keys and values to override config.
         """
-        self.path = path or DEFAULT_CONFIG_NAME
+        self.path = path
         self.config = self._load()
+
         if overrides:
             self._apply_overrides(overrides)
+
+        _set_active_config(self)
 
     def _load(self):
         """
@@ -31,7 +45,7 @@ class ConfigParser:
         if not path.endswith(".json"):
             path += ".json"
 
-        if not os.path.sep in path:
+        if os.path.sep not in path:
             path = os.path.join(DEFAULT_CONFIG_PATH, path)
 
         with open(path, "r") as f:

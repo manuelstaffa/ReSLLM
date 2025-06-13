@@ -44,3 +44,30 @@ Specified in <config_name>.json, with applicable overrides specified below.
 | `` | type | `<content>` | use |
 | `--config` `-c` | str | `<config name, filename, or path (default: default.json)>` | Name of the config file to use |
 | `--model` | str | `<openai model (gpt-4o, gpt-4-turbo, gpt-4, gpt-3.5-turbo)>` | The OpenAI model to use |
+
+## Config Parser
+
+Config Parser for RePrompt.
+
+Access config:  
+```python
+ConfigParser(path=args.config, overrides=overrides)  
+config = get_active_config()  
+```
+
+Access config values:  
+```python
+config.get('<category>')  
+config.get('<category>.<value>')  
+config["<category>"]
+config["<category>"]["<value>"]
+config["<category>.<value>"]
+```
+
+Custom format:
+```python
+context = {
+    "<key>": <value>,
+}
+prompt = config.format("<fstring as string>", context=context)
+```

@@ -1,3 +1,6 @@
-with open(f"RePrompt/context/games/skiing/game_objects.py", "r") as file:
-    game_objects = file.read().strip()
-    print(game_objects)
+def test_config():
+    from reprompt.parse_config import get_active_config
+
+    active_config = get_active_config()
+
+    print(f"Active Config test: {active_config}")

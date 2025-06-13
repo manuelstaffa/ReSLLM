@@ -2,10 +2,10 @@ import os
 import datetime
 from openai import OpenAI
 
-
+"""
 def get_api_key():
     # Load your OpenAI API key from an environment variable or a secure location
-    with open("RePrompt/secret/openai-api-key.txt", "r") as file:
+    with open("RePrompt/secret/openai-api-key", "r") as file:
         api_key = file.read().strip()
         return api_key
 
@@ -40,6 +40,7 @@ response = client.chat.completions.create(
 )
 
 print(response.choices[0].message.content)
+"""
 
 
 class RePrompter:
@@ -67,8 +68,8 @@ class RePrompter:
             messages=self.conversation_history,
             model=self.model,
             seed=self.seed,
-            top_p=0,                       # Nucleus sampling probability (0.0 to 1.0). Alternative to temperature.
-            # temperature=1.0,             # Sampling randomness (0.0 to 2.0). Higher → more random.                 
+            top_p=0,  # Nucleus sampling probability (0.0 to 1.0). Alternative to temperature.
+            # temperature=1.0,             # Sampling randomness (0.0 to 2.0). Higher → more random.
             # max_tokens=None,             # Max tokens in the response. Defaults to model limit.
             # presence_penalty=0.0,        # Penalize new tokens based on whether they appear in the text so far.
             # frequency_penalty=0.0,       # Penalize tokens that appear frequently.
