@@ -45,7 +45,6 @@ class ConfigParser:
         """
         for key, value in overrides.items():
             if value is not None:
-                # For nested keys, support dot notation in overrides if needed
                 self._set_nested(self.config, key, value)
 
     def _set_nested(self, d, key, value):
@@ -115,9 +114,9 @@ class ConfigParser:
                 f"Config value at '{key}' is not a string and cannot be formatted."
             )
 
-        combined_context = dict(self.config)  # Start with config values
+        combined_context = dict(self.config)
         if context:
-            combined_context.update(context)  # External context takes precedence
+            combined_context.update(context)
 
         return value.format(**combined_context)
 
