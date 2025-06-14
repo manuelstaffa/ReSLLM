@@ -83,6 +83,28 @@ class RewardPrompter:
         else:
             raise ValueError("prompt.template must be a string or list of strings.")
 
+    def _get_error_prompt(self, game, error_message, function_name):
+        """
+        Generate an error prompt for a given game.
+
+        Args:
+            game (str): Game name to fill in the prompt context.
+            error_message (str): Error message to include in the prompt.
+            function_name (str): Function name to include in the prompt.
+
+        Returns:
+            str: Formatted error prompt for the game.
+        """
+        context = {
+            "game": game,
+            "model": self.model,
+            "temperature": self.temperature,
+            "seed": self.seed,
+            "error_message": error_message,
+            "function_name": function_name,
+        }
+        return format_prompt(self.config.get("prompt.error_prompt"), context=context)
+
     def _create_output_folder(self, game):
         """
         Create a timestamped output folder for a game's prompt results.
@@ -161,17 +183,54 @@ class RewardPrompter:
         )
         return response.choices[0].message.content.strip()
 
+    def _check_syntax(function_code: str) -> str | None:
+        """
+        Check the syntax of a single Python function.
+
+        Args:
+            function_code (str): The Python function code as a string.
+
+        Returns:
+            str or None: Returns the syntax error message if invalid, else None.
+        """
+        try:
+            compile(function_code, "<string>", "exec")
+            return None
+        except SyntaxError as e:
+            return f"SyntaxError: {e.msg} at line {e.lineno}, offset {e.offset}"
+        except Exception as e:
+            return f"Error: {str(e)}"
+
+    def _get_method_name(function_code: str) -> str | None:
+        """
+        Extracts the function name from a Python function definition string.
+
+        Args:
+            function_code (str): The full Python function code.
+
+        Returns:
+            str or None: The function name if found, else None.
+        """
+        match = re.search(r"def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(", function_code)
+        return match.group(1) if match else None
+
     def master_prompt(self):
         """
         Main execution loop: iterates through configured games, generates prompts,
         calls OpenAI API, extracts reward functions, and logs all output.
         """
         for game in self.games:
+            ####################################################
+            # Initialize conversation and output structures
+            ####################################################
             conversation = [{"role": "system", "content": self.system_prompt}]
             generated_methods = []
             errors = ""
             output_folder = self._create_output_folder(game)
 
+            ######################################################
+            # Generate initial prompts and call OpenAI API
+            ######################################################
             try:
                 prompts = self._get_prompts(game)
                 for prompt_text in prompts:
@@ -181,10 +240,59 @@ class RewardPrompter:
 
                     extracted_methods = self._extract_functions([response_text])
                     generated_methods.extend(extracted_methods)
-
             except Exception as e:
                 errors += f"Error for game '{game}': {str(e)}\n"
 
+            if not generated_methods:
+                raise ValueError(f"No valid methods generated for game '{game}'.")
+
+            ######################################################
+            # Check syntax of generated methods and fix errors
+            ######################################################
+            try:
+                for method in generated_methods:
+                    syntax_error = self._check_syntax(method)
+                    if syntax_error:
+                        errors += f"Syntax error in method:\n{method}\nError: {syntax_error}\n"
+                    else:
+                        continue
+
+                    prompt_text = self._get_error_prompt(game, syntax_error, method)
+                    conversation.append({"role": "user", "content": prompt_text})
+                    response_text = self._call_openai(conversation)
+                    conversation.append({"role": "assistant", "content": response_text})
+
+                    fixed_methods = self._extract_functions([response_text])
+                    if fixed_methods:
+                        gen_methods_dict = {
+                            self._get_method_name(m): m
+                            for m in generated_methods
+                            if self._get_method_name(m)
+                        }
+                    else:
+                        errors += f"Failed to fix method: {method}\n"
+                        continue
+
+                    for fixed in fixed_methods:
+                        fixed_name = self._get_method_name(fixed)
+                        if fixed_name in gen_methods_dict:
+                            idx = generated_methods.index(gen_methods_dict[fixed_name])
+                            generated_methods[idx] = fixed
+                            gen_methods_dict[fixed_name] = fixed
+                        else:
+                            generated_methods.append(fixed)
+                            gen_methods_dict[fixed_name] = fixed
+            except Exception as e:
+                errors += f"Error checking syntax for game '{game}': {str(e)}\n"
+
+            ######################################################
+            # Check methods in HackAtari and fix errors
+            ######################################################
+            # TODO: Implement HackAtari integration to validate methods
+
+            ######################################################
+            # Log all outputs: conversation, errors, and methods
+            ######################################################
             self._log_output(
                 output_folder, conversation, errors, generated_methods, game
             )
