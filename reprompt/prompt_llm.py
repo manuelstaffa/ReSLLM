@@ -1,4 +1,5 @@
 import os
+import re
 import datetime
 from openai import OpenAI
 from reprompt.parse_config import get_active_config
@@ -6,15 +7,36 @@ from reprompt.utils import format_prompt, read_file
 
 
 class RewardPrompter:
+    """
+    Class for generating reward functions for Atari games using OpenAI's API.
+    Manages prompt generation, API communication, output organization, and logging.
+    """
+
     def __init__(self, seed=None):
+        """
+        Initialize the RewardPrompter with configuration and API setup.
+
+        Args:
+            seed (int, optional): Seed for deterministic output (if supported by model).
+        """
         self.config = get_active_config()
         self.client = OpenAI(api_key=self._get_api_key())
         self.games = self.config.get("env.game")
         self.model = self.config.get("openai.model")
+        self.temperature = self.config.get("openai.temperature")
         self.seed = seed
         self.system_prompt = self.config.get("prompt.system_message")
 
     def _get_api_key(self):
+        """
+        Retrieve or prompt for OpenAI API key.
+
+        Returns:
+            str: OpenAI API key.
+
+        Raises:
+            FileNotFoundError: If API key is not found and not provided interactively.
+        """
         try:
             with open("RePrompt/secret/openai-api-key", "r") as file:
                 return file.read().strip()
@@ -28,11 +50,28 @@ class RewardPrompter:
             return api_key
 
     def _get_prompts(self, game):
+        """
+        Generate prompt(s) for a given game based on configuration.
+
+        Args:
+            game (str): Game name to fill in the prompt context.
+
+        Returns:
+            list of str: List of formatted prompts for the game.
+
+        Raises:
+            ValueError: If prompt.template is not a string or list of strings.
+        """
         context = {
             "game": game,
             "model": self.model,
-            "temperature": self.config.get("openai.temperature"),
+            "temperature": self.temperature,
             "seed": self.seed,
+            "parent_objects": read_file("RePrompt/context/game_objects.py"),
+            "game_objects": read_file(f"RePrompt/context/{game}/game_objects.py"),
+            "game_description": read_file(
+                f"RePrompt/context/{game}/game_description.txt"
+            ),
         }
 
         template = self.config.get("prompt.template")
@@ -45,13 +84,52 @@ class RewardPrompter:
             raise ValueError("prompt.template must be a string or list of strings.")
 
     def _create_output_folder(self, game):
+        """
+        Create a timestamped output folder for a game's prompt results.
+
+        Args:
+            game (str): Name of the game.
+
+        Returns:
+            str: Path to the created output folder.
+        """
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         config_name = self.config.get("config_name", "default")
         output_folder = f"RePrompt/out/{game}/{timestamp}-{config_name}"
         os.makedirs(output_folder, exist_ok=True)
         return output_folder
 
-    def _log_output(self, folder, conversation, errors, methods):
+    def _extract_functions(self, responses):
+        """
+        Extract all Python code blocks from a list of LLM responses.
+
+        Args:
+            responses (list of str): List of LLM responses containing Python code blocks.
+
+        Returns:
+            list of str: List of extracted Python code blocks.
+        """
+        code_blocks = []
+        code_pattern = re.compile(r"```(?:python)?(.*?)```", re.DOTALL | re.IGNORECASE)
+
+        for response in responses:
+            matches = code_pattern.findall(response)
+            for code in matches:
+                code_blocks.append(code.strip())
+
+        return code_blocks
+
+    def _log_output(self, folder, conversation, errors, methods, game):
+        """
+        Log conversation, errors, and the combined reward function code to output files.
+
+        Args:
+            folder (str): Path to the output folder.
+            conversation (list of dict): List of conversation entries.
+            errors (str): Collected error messages, if any.
+            methods (list of str): List of extracted Python code blocks.
+            game (str): The game name for import path.
+        """
         with open(os.path.join(folder, "conversation.txt"), "w") as f:
             for entry in conversation:
                 f.write(f"{entry['role'].upper()}: {entry['content']}\n\n")
@@ -61,22 +139,32 @@ class RewardPrompter:
                 f.write(errors)
 
         with open(os.path.join(folder, "reward_function.py"), "w") as f:
+            f.write(f"from ocatari.ram.{game} import *\n\n")
             for method in methods:
                 f.write(method + "\n\n")
 
     def _call_openai(self, conversation):
+        """
+        Call the OpenAI chat completion API with the conversation.
+
+        Args:
+            conversation (list of dict): List of conversation entries in OpenAI chat format.
+
+        Returns:
+            str: The content of the assistant's reply.
+        """
         response = self.client.chat.completions.create(
             messages=conversation,
             model=self.model,
             seed=self.seed,
-            temperature=self.config.get("openai.temperature"),
+            temperature=self.temperature,
         )
         return response.choices[0].message.content.strip()
 
     def master_prompt(self):
         """
-        Loop through all configured games, generate prompts, and call the OpenAI API.
-        Logs conversation, errors, and generated code.
+        Main execution loop: iterates through configured games, generates prompts,
+        calls OpenAI API, extracts reward functions, and logs all output.
         """
         for game in self.games:
             conversation = [{"role": "system", "content": self.system_prompt}]
@@ -91,35 +179,12 @@ class RewardPrompter:
                     response_text = self._call_openai(conversation)
                     conversation.append({"role": "assistant", "content": response_text})
 
-                    # Optional: extract functions from the response (simple approach)
-                    extracted = self._extract_functions(response_text)
-                    generated_methods.extend(extracted)
+                    extracted_methods = self._extract_functions([response_text])
+                    generated_methods.extend(extracted_methods)
 
             except Exception as e:
                 errors += f"Error for game '{game}': {str(e)}\n"
 
-            self._log_output(output_folder, conversation, errors, generated_methods)
-
-    def _extract_functions(self, response_text):
-        """
-        Naive function extraction - looks for 'def ' lines.
-        Customize this for more robust function extraction.
-        """
-        methods = []
-        lines = response_text.splitlines()
-        current_func = []
-        inside_func = False
-
-        for line in lines:
-            if line.strip().startswith("def "):
-                if current_func:
-                    methods.append("\n".join(current_func))
-                current_func = [line]
-                inside_func = True
-            elif inside_func:
-                current_func.append(line)
-
-        if current_func:
-            methods.append("\n".join(current_func))
-
-        return methods
+            self._log_output(
+                output_folder, conversation, errors, generated_methods, game
+            )
