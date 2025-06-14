@@ -26,6 +26,7 @@ class RewardPrompter:
         self.temperature = self.config.get("openai.temperature")
         self.seed = seed
         self.system_prompt = self.config.get("prompt.system_message")
+        self.max_retries = self.config.get("prompt.max_retries")
 
     def _get_api_key(self):
         """
@@ -249,41 +250,49 @@ class RewardPrompter:
             ######################################################
             # Check syntax of generated methods and fix errors
             ######################################################
-            try:
-                for method in generated_methods:
-                    syntax_error = self._check_syntax(method)
-                    if syntax_error:
-                        errors += f"Syntax error in method:\n{method}\nError: {syntax_error}\n"
-                    else:
-                        continue
-
-                    prompt_text = self._get_error_prompt(game, syntax_error, method)
-                    conversation.append({"role": "user", "content": prompt_text})
-                    response_text = self._call_openai(conversation)
-                    conversation.append({"role": "assistant", "content": response_text})
-
-                    fixed_methods = self._extract_functions([response_text])
-                    if fixed_methods:
-                        gen_methods_dict = {
-                            self._get_method_name(m): m
-                            for m in generated_methods
-                            if self._get_method_name(m)
-                        }
-                    else:
-                        errors += f"Failed to fix method: {method}\n"
-                        continue
-
-                    for fixed in fixed_methods:
-                        fixed_name = self._get_method_name(fixed)
-                        if fixed_name in gen_methods_dict:
-                            idx = generated_methods.index(gen_methods_dict[fixed_name])
-                            generated_methods[idx] = fixed
-                            gen_methods_dict[fixed_name] = fixed
+            attempt = 0
+            has_errors = False
+            while attempt < self.max_retries and generated_methods and has_errors:
+                try:
+                    for method in generated_methods:
+                        syntax_error = self._check_syntax(method)
+                        if syntax_error:
+                            has_errors = True
+                            errors += f"Syntax error in method:\n{method}\nError: {syntax_error}\n"
                         else:
-                            generated_methods.append(fixed)
-                            gen_methods_dict[fixed_name] = fixed
-            except Exception as e:
-                errors += f"Error checking syntax for game '{game}': {str(e)}\n"
+                            continue
+
+                        prompt_text = self._get_error_prompt(game, syntax_error, method)
+                        conversation.append({"role": "user", "content": prompt_text})
+                        response_text = self._call_openai(conversation)
+                        conversation.append(
+                            {"role": "assistant", "content": response_text}
+                        )
+
+                        fixed_methods = self._extract_functions([response_text])
+                        if fixed_methods:
+                            gen_methods_dict = {
+                                self._get_method_name(m): m
+                                for m in generated_methods
+                                if self._get_method_name(m)
+                            }
+                        else:
+                            errors += f"Failed to fix method: {method}\n"
+                            continue
+
+                        for fixed in fixed_methods:
+                            fixed_name = self._get_method_name(fixed)
+                            if fixed_name in gen_methods_dict:
+                                idx = generated_methods.index(
+                                    gen_methods_dict[fixed_name]
+                                )
+                                generated_methods[idx] = fixed
+                                gen_methods_dict[fixed_name] = fixed
+                            else:
+                                generated_methods.append(fixed)
+                                gen_methods_dict[fixed_name] = fixed
+                except Exception as e:
+                    errors += f"Error checking syntax for game '{game}': {str(e)}\n"
 
             ######################################################
             # Check methods in HackAtari and fix errors

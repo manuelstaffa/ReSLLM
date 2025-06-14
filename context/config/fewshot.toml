@@ -3,9 +3,10 @@ model = "gpt-4o"
 temperature = 0.7
 
 [env]
-game = "Freeway"
+games = ["Freeway"]
 
 [prompt]
+max_retries = 3
 template = "Generate reward function for {game} using model {model}."
 system_prompt = """
 You are an expert in reinforcement learning and game design. Your task is to create a reward function for the game {game} using the model {model}. The reward function should be designed to encourage the agent to learn effectively and efficiently.
