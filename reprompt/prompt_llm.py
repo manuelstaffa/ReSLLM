@@ -21,11 +21,10 @@ class RewardPrompter:
         """
         self.config = get_active_config()
         self.client = OpenAI(api_key=self._get_api_key())
-        self.games = self.config.get("env.game")
+        self.games = self.config.get("env.games")
         self.model = self.config.get("openai.model")
         self.temperature = self.config.get("openai.temperature")
         self.seed = seed
-        self.system_prompt = self.config.get("prompt.system_message")
         self.max_retries = self.config.get("prompt.max_retries")
 
     def _get_api_key(self):
@@ -39,16 +38,41 @@ class RewardPrompter:
             FileNotFoundError: If API key is not found and not provided interactively.
         """
         try:
-            with open("RePrompt/secret/openai-api-key", "r") as file:
+            with open("secret/openai-api-key", "r") as file:
                 return file.read().strip()
         except FileNotFoundError:
             api_key = input("OpenAI API key not found. Enter API key: ").strip()
             save = input("Save this API key for future use? [y/N] ").strip().lower()
             if save in ["y", "yes"]:
-                os.makedirs("RePrompt/secret", exist_ok=True)
-                with open("RePrompt/secret/openai-api-key", "w") as file:
+                os.makedirs("secret", exist_ok=True)
+                with open("secret/openai-api-key", "w") as file:
                     file.write(api_key)
             return api_key
+
+    def _get_system_prompt(self, game):
+        """
+        Retrieve the system prompt from the configuration.
+
+        Returns:
+            str: The system prompt string.
+
+        Raises:
+            ValueError: If the system prompt is not defined in the config.
+        """
+        system_prompt = self.config.get("prompt.system_prompt")
+        if not system_prompt:
+            raise ValueError("prompt.system_prompt must be defined in the config.")
+
+        context = {
+            "game": game,
+            "model": self.model,
+            "temperature": self.temperature,
+            "seed": self.seed,
+        }
+
+        system_prompt = format_prompt(system_prompt, context=context)
+
+        return system_prompt
 
     def _get_prompts(self, game):
         """
@@ -61,28 +85,30 @@ class RewardPrompter:
             list of str: List of formatted prompts for the game.
 
         Raises:
-            ValueError: If prompt.template is not a string or list of strings.
+            ValueError: If prompt.reward_prompt is not a string or list of strings.
         """
+        # print(f"Generating prompts for game: {game}, {game.lower()}")
+
+        game = game.lower() if isinstance(game, str) else game
+
         context = {
             "game": game,
             "model": self.model,
             "temperature": self.temperature,
             "seed": self.seed,
-            "parent_objects": read_file("RePrompt/context/game_objects.py"),
-            "game_objects": read_file(f"RePrompt/context/{game}/game_objects.py"),
-            "game_description": read_file(
-                f"RePrompt/context/{game}/game_description.txt"
-            ),
+            "parent_objects": read_file("context/games/game_objects.py"),
+            "game_objects": read_file(f"context/games/{game}/game_objects.py"),
+            "game_description": read_file(f"context/games/{game}/game_description.txt"),
         }
 
-        template = self.config.get("prompt.template")
+        templates = self.config.get("prompt.reward_prompt")
 
-        if isinstance(template, list):
-            return [format_prompt(pt, context=context) for pt in template]
-        elif isinstance(template, str):
-            return [format_prompt(template, context=context)]
+        if isinstance(templates, list):
+            return [format_prompt(template, context=context) for template in templates]
+        # elif isinstance(templates, str):
+        #    return [format_prompt(templates, context=context)]
         else:
-            raise ValueError("prompt.template must be a string or list of strings.")
+            raise ValueError("prompt.reward_prompt must be a list of strings.")
 
     def _get_error_prompt(self, game, error_message, function_name):
         """
@@ -104,7 +130,14 @@ class RewardPrompter:
             "error_message": error_message,
             "function_name": function_name,
         }
-        return format_prompt(self.config.get("prompt.error_prompt"), context=context)
+
+        template = self.config.get("prompt.error_template")
+        if not template:
+            raise ValueError("prompt.error_template must be defined in the config.")
+
+        error_prompt = format_prompt(template, context=context)
+
+        return error_prompt
 
     def _create_output_folder(self, game):
         """
@@ -117,9 +150,10 @@ class RewardPrompter:
             str: Path to the created output folder.
         """
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        config_name = self.config.get("config_name", "default")
-        output_folder = f"RePrompt/out/{game}/{timestamp}-{config_name}"
+        config_name = self.config.get("general.config_name")
+        output_folder = f"out/{game}/{timestamp}-{config_name}"
         os.makedirs(output_folder, exist_ok=True)
+
         return output_folder
 
     def _extract_functions(self, responses):
@@ -184,7 +218,7 @@ class RewardPrompter:
         )
         return response.choices[0].message.content.strip()
 
-    def _check_syntax(function_code: str) -> str | None:
+    def _check_syntax(self, function_code: str) -> str | None:
         """
         Check the syntax of a single Python function.
 
@@ -202,7 +236,7 @@ class RewardPrompter:
         except Exception as e:
             return f"Error: {str(e)}"
 
-    def _get_method_name(function_code: str) -> str | None:
+    def _get_method_name(self, function_code: str) -> str | None:
         """
         Extracts the function name from a Python function definition string.
 
@@ -220,11 +254,14 @@ class RewardPrompter:
         Main execution loop: iterates through configured games, generates prompts,
         calls OpenAI API, extracts reward functions, and logs all output.
         """
+        # print(self.games)
         for game in self.games:
-            ####################################################
+            ######################################################
             # Initialize conversation and output structures
-            ####################################################
-            conversation = [{"role": "system", "content": self.system_prompt}]
+            ######################################################
+            system_prompt = self._get_system_prompt(game)
+            conversation = [{"role": "system", "content": system_prompt}]
+
             generated_methods = []
             errors = ""
             output_folder = self._create_output_folder(game)
@@ -242,6 +279,7 @@ class RewardPrompter:
                     extracted_methods = self._extract_functions([response_text])
                     generated_methods.extend(extracted_methods)
             except Exception as e:
+                print(f"Error generating prompts for game '{game}': {str(e)}")
                 errors += f"Error for game '{game}': {str(e)}\n"
 
             if not generated_methods:
@@ -272,9 +310,9 @@ class RewardPrompter:
                         fixed_methods = self._extract_functions([response_text])
                         if fixed_methods:
                             gen_methods_dict = {
-                                self._get_method_name(m): m
-                                for m in generated_methods
-                                if self._get_method_name(m)
+                                self._get_method_name(method): method
+                                for method in generated_methods
+                                if self._get_method_name(method)
                             }
                         else:
                             errors += f"Failed to fix method: {method}\n"

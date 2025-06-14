@@ -1,18 +1,23 @@
-[openai]
-model = "gpt-4o"
-temperature = 0.7
+[general]
+config_name = "default"
 
 [env]
 games = ["Freeway"]
 
+[openai]
+model = "gpt-4o"
+temperature = 0.7
+
 [prompt]
 max_retries = 3
-template = "Generate reward function for {game} using model {model}."
 system_prompt = """
 You are an expert in reinforcement learning and game design. Your task is to create a reward function for the game {game} using the model {model}. The reward function should be designed to encourage the agent to learn effectively and efficiently.
 """
 error_prompt = """
-There was an error while generating the reward function for the game {game}. Please check the input parameters and try again.
+There was an error while generating the reward function for the game {game}. 
+
+Function name: {function_name}
+Error details: {error_message}
 """
 prompt = [
     """

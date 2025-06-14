@@ -1,5 +1,5 @@
-from reprompt.parse_config import ConfigParser, get_active_config
-from repromt.prompt_llm import RewardPrompter
+from reprompt.parse_config import ConfigParser  # , get_active_config
+from reprompt.prompt_llm import RewardPrompter
 import tyro
 from dataclasses import dataclass
 from typing import Optional, Annotated, Literal
@@ -7,8 +7,12 @@ from typing import Optional, Annotated, Literal
 
 @dataclass
 class Args:
-    config: Annotated[str, tyro.conf.arg(aliases=["-c"])] = "default.toml"
-    """Path to configuration TOML file."""
+    try:
+        config: Annotated[str, tyro.conf.arg(aliases=["-c"])] = "default.toml"
+        """Path to configuration TOML file."""
+    except Exception:
+        config: str = "default.toml"
+        """Path to configuration TOML file."""
 
     model: Optional[Literal["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]] = None
     """OpenAI model to use."""
@@ -27,7 +31,8 @@ def main():
     ConfigParser(path=args.config, overrides=overrides)
     # config = get_active_config()
 
-    RewardPrompter().master_prompt()
+    prompter = RewardPrompter()
+    prompter.master_prompt()
 
     """print(f"Final Configuration: {config}")
     print(

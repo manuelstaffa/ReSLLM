@@ -1,0 +1,18 @@
+[general]
+config_name = ""
+
+[env]
+games = [""]
+
+[openai]
+model = ""
+temperature = 0.0
+
+[prompt]
+max_retries = 3
+system_prompt = """
+"""
+error_prompt = """
+"""
+reward_prompt = ["""
+    """]

@@ -108,7 +108,10 @@ class ConfigParser:
         try:
             return self._get_nested(self.config, key)
         except KeyError:
-            return default
+            if default is not None:
+                return default
+            else:
+                raise KeyError(f"Config key '{key}' not found and no default provided.")
 
     def format(self, key, context=None):
         """

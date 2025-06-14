@@ -1,7 +1,8 @@
 import ast
+import string
 
 
-def format_prompt(self, template, context):
+def format_prompt(template, context):
     """
     Format a template string by replacing placeholders with context values.
 
@@ -16,21 +17,15 @@ def format_prompt(self, template, context):
         KeyError: If any placeholders in the template are missing in the context.
         ValueError: If there are unused keys in the context.
     """
-    import string
-
     formatter = string.Formatter()
     expected_keys = {
         field_name for _, field_name, _, _ in formatter.parse(template) if field_name
     }
 
     missing_keys = expected_keys - context.keys()
-    extra_keys = context.keys() - expected_keys
 
     if missing_keys:
         raise KeyError(f"Missing keys in context for template: {missing_keys}")
-
-    if extra_keys:
-        raise ValueError(f"Extra keys in context not used in template: {extra_keys}")
 
     return template.format(**context)
 

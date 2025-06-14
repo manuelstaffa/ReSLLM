@@ -1,13 +1,15 @@
-[openai]
-model = "gpt-4o"
-temperature = 0.7
+[general]
+config_name = "default"
 
 [env]
 games = ["Freeway"]
 
+[openai]
+model = "gpt-4o"
+temperature = 0.7
+
 [prompt]
 max_retries = 3
-template = "Generate reward function for {game} using model {model}."
 system_prompt = """
 You are an expert in reinforcement learning and game design. Your task is to create a reward function for the game {game} using the model {model}. The reward function should be designed to encourage the agent to learn effectively and efficiently.
 """
@@ -17,7 +19,7 @@ There was an error while generating the reward function for the game {game}.
 Function name: {function_name}
 Error details: {error_message}
 """
-prompt = [
+reward_prompt = [
     """
     We want to create a reward function for playing the Atari game {game}. As a first step we want to collect functions that are helpful for understanding events that are happening in the game that could be relevant for the reward, i.e., items colliding. Then we need the actual reward function itself. In the following there will be existing game objects given, please generate functions that can be used to understand the game state. Please don't use undefined variables or functions.
 
@@ -39,6 +41,6 @@ prompt = [
         return reward
     ```
 
-    Please provide a single python file.
+    Please provide a single python file. Do not include any class definitions or definitions without implementation, as not to cause errors in the HackAtari environment. The file should be in an executable format and state, so that it can be run directly in the HackAtari environment.
     """,
 ]
