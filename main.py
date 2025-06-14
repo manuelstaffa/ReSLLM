@@ -1,4 +1,5 @@
 from reprompt.parse_config import ConfigParser, get_active_config
+from repromt.prompt_llm import RewardPrompter
 import tyro
 from dataclasses import dataclass
 from typing import Optional, Annotated, Literal
@@ -24,7 +25,9 @@ def main():
         "openai.temperature": args.temperature,
     }
     ConfigParser(path=args.config, overrides=overrides)
-    config = get_active_config()
+    # config = get_active_config()
+
+    RewardPrompter().master_prompt()
 
     """print(f"Final Configuration: {config}")
     print(
