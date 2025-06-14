@@ -19,10 +19,10 @@ RePrompt
 ├── out
 │   └── <game>
 │       └── <run>
-│           ├── log.txt
-│           ├── conversation_history.toml
+│           ├── errors.txt
+│           ├── conversation.txt
 │           ├── config.toml
-│           └── <game>_reward.py
+│           └── reward_function.py
 ├── reprompt
 │   ├── build_prompt.py
 │   ├── prompt_llm.py

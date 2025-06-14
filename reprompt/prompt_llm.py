@@ -175,6 +175,9 @@ class RewardPrompter:
             for method in methods:
                 f.write(method + "\n\n")
 
+        with open(os.path.join(folder, "config.toml"), "w") as f:
+            f.write(str(self.config))
+
     def _call_openai(self, conversation):
         """
         Call the OpenAI chat completion API with the conversation.
