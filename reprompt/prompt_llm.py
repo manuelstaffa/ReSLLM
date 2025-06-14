@@ -1,168 +1,125 @@
-from reprompt.parse_config import get_active_config
 import os
 import datetime
 from openai import OpenAI
-
-
-"""
-def get_api_key():
-    # Load your OpenAI API key from an environment variable or a secure location
-    with open("RePrompt/secret/openai-api-key", "r") as file:
-        api_key = file.read().strip()
-        return api_key
-
-
-client = OpenAI(api_key=get_api_key())
-
-response = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {"role": "system", "content": "You are my helpful assistant."},
-        {
-            "role": "user",
-            "content": "Give me a list of 5 interesting facts about the history of artificial intelligence.",
-        },
-    ],
-    # temperature=1.0,             # Sampling randomness (0.0 to 2.0). Higher → more random.
-    # top_p=1.0,                   # Nucleus sampling probability (0.0 to 1.0). Alternative to temperature.
-    # max_tokens=None,             # Max tokens in the response. Defaults to model limit.
-    # presence_penalty=0.0,        # Penalize new tokens based on whether they appear in the text so far.
-    # frequency_penalty=0.0,       # Penalize tokens that appear frequently.
-    # logit_bias={},               # Modify likelihood of specific tokens (token_id: bias_value).
-    # user=None,                   # String ID to track end-user (for abuse detection/logging).
-    # n=1,                         # Number of completions to generate for each prompt.
-    # stop=None,                   # Sequence or list of sequences where the API stops generating further tokens.
-    # seed=None,                   # Integer seed for reproducible results.
-    # stream=False,                # Whether to stream partial progress (for real-time responses).
-    # tools=None,                  # List of tool definitions (e.g., function-calling tools).
-    # tool_choice=None,            # Specify tool to use ("none", "auto", or a specific tool name).
-    # response_format=None,        # "text" or "json" (relevant for function-calling with JSON responses).
-    # logprobs=None,               # Include token-level log probabilities (only supported in some models).
-    # max_tokens=100,               # Example override — limit to 100 tokens in this case.
-)
-
-print(response.choices[0].message.content)
-"""
+from reprompt.parse_config import get_active_config
+from reprompt.utils import format_prompt, read_file
 
 
 class RewardPrompter:
-    def __init__(self, game, model="gpt-4o", seed=None):
+    def __init__(self, seed=None):
         self.config = get_active_config()
         self.client = OpenAI(api_key=self._get_api_key())
-        self.game = game
-        self.model = model
+        self.games = self.config.get("env.game")
+        self.model = self.config.get("openai.model")
         self.seed = seed
-        self.system_fingerprint = None
-        self.conversation_history = [
-            {
-                "role": "system",
-                "content": "You are a helpful assistant that creates reward functions for reinforcement learning researchers.",
-            },
-        ]
+        self.system_prompt = self.config.get("prompt.system_message")
 
     def _get_api_key(self):
-        """
-        Load the OpenAI API key from a file or prompt the user to enter it.
-
-        Args:
-            None
-
-        Returns:
-            str: The OpenAI API key.
-
-        Raises:
-            FileNotFoundError: If the API key file does not exist and the user does not provide a key.
-            Exception: If there is an error saving the API key to the file.
-        """
         try:
             with open("RePrompt/secret/openai-api-key", "r") as file:
-                api_key = file.read().strip()
-                return api_key
+                return file.read().strip()
         except FileNotFoundError:
-            print("Please provide the OpenAI API key:")
-            api_key = input().strip()
-            print(
-                "Do you want to save the key for future use? The key will be stored in the gitignored file `RePrompt/secret/openai-api-key`. [y|N]"
-            )
-            answer = input().strip().lower()
-            if answer in ["yes", "y"]:
-                try:
-                    with open("RePrompt/secret/openai-api-key", "w") as file:
-                        file.write(api_key)
-                    print("API key stored successfully.")
-                except Exception as e:
-                    print(f"Error storing API key: {e}")
-            else:
-                print("API key not saved for future use.")
+            api_key = input("OpenAI API key not found. Enter API key: ").strip()
+            save = input("Save this API key for future use? [y/N] ").strip().lower()
+            if save in ["y", "yes"]:
+                os.makedirs("RePrompt/secret", exist_ok=True)
+                with open("RePrompt/secret/openai-api-key", "w") as file:
+                    file.write(api_key)
+            return api_key
 
-        return api_key
+    def _get_prompts(self, game):
+        context = {
+            "game": game,
+            "model": self.model,
+            "temperature": self.config.get("openai.temperature"),
+            "seed": self.seed,
+        }
 
-    def prompt(self, prompt_text):
-        """
-        Generate a response to a prompt using the OpenAI API.
+        template = self.config.get("prompt.template")
 
-        Args:
-            prompt_text (str): The text prompt to send to the OpenAI API.
+        if isinstance(template, list):
+            return [format_prompt(pt, context=context) for pt in template]
+        elif isinstance(template, str):
+            return [format_prompt(template, context=context)]
+        else:
+            raise ValueError("prompt.template must be a string or list of strings.")
 
-        Returns:
-            str: The response text generated by the OpenAI API.
+    def _create_output_folder(self, game):
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        config_name = self.config.get("config_name", "default")
+        output_folder = f"RePrompt/out/{game}/{timestamp}-{config_name}"
+        os.makedirs(output_folder, exist_ok=True)
+        return output_folder
 
-        Raises:
-            Exception: If there is an error during the API call or response processing.
-        """
+    def _log_output(self, folder, conversation, errors, methods):
+        with open(os.path.join(folder, "conversation.txt"), "w") as f:
+            for entry in conversation:
+                f.write(f"{entry['role'].upper()}: {entry['content']}\n\n")
 
-        # Add the prompt to the conversation history
-        self.conversation_history.append({"role": "user", "content": prompt_text})
+        if errors:
+            with open(os.path.join(folder, "errors.txt"), "w") as f:
+                f.write(errors)
 
-        # Call the completion endpoint
+        with open(os.path.join(folder, "reward_function.py"), "w") as f:
+            for method in methods:
+                f.write(method + "\n\n")
+
+    def _call_openai(self, conversation):
         response = self.client.chat.completions.create(
-            messages=self.conversation_history,
+            messages=conversation,
             model=self.model,
             seed=self.seed,
-            top_p=0,  # Nucleus sampling probability (0.0 to 1.0). Alternative to temperature.
-            # temperature=1.0,             # Sampling randomness (0.0 to 2.0). Higher → more random.
-            # max_tokens=None,             # Max tokens in the response. Defaults to model limit.
-            # presence_penalty=0.0,        # Penalize new tokens based on whether they appear in the text so far.
-            # frequency_penalty=0.0,       # Penalize tokens that appear frequently.
-            # logit_bias={},               # Modify likelihood of specific tokens (token_id: bias_value).
-            # user=None,                   # String ID to track end-user (for abuse detection/logging).
-            # n=1,                         # Number of completions to generate for each prompt.
-            # stop=None,                   # Sequence or list of sequences where the API stops generating further tokens.
-            # stream=False,                # Whether to stream partial progress (for real-time responses).
-            # tools=None,                  # List of tool definitions (e.g., function-calling tools).
-            # tool_choice=None,            # Specify tool to use ("none", "auto", or a specific tool name).
-            # response_format=None,        # "text" or "json" (relevant for function-calling with JSON responses).
-            # logprobs=None,               # Include token-level log probabilities (only supported in some models).
-            # max_tokens=100,               # Example override — limit to 100 tokens in this case.
+            temperature=self.config.get("openai.temperature"),
         )
-        # Get system fingerprint
-        self.system_fingerprint = response.system_fingerprint
-        self.model = response.model
+        return response.choices[0].message.content.strip()
 
-        response_text = response.choices[0].message.content.strip()
+    def master_prompt(self):
+        """
+        Loop through all configured games, generate prompts, and call the OpenAI API.
+        Logs conversation, errors, and generated code.
+        """
+        for game in self.games:
+            conversation = [{"role": "system", "content": self.system_prompt}]
+            generated_methods = []
+            errors = ""
+            output_folder = self._create_output_folder(game)
 
-        self._add_to_conversation_history(prompt_text, response_text)
-        self._log_prompt(prompt_text, response_text)
+            try:
+                prompts = self._get_prompts(game)
+                for prompt_text in prompts:
+                    conversation.append({"role": "user", "content": prompt_text})
+                    response_text = self._call_openai(conversation)
+                    conversation.append({"role": "assistant", "content": response_text})
 
-        return response_text
+                    # Optional: extract functions from the response (simple approach)
+                    extracted = self._extract_functions(response_text)
+                    generated_methods.extend(extracted)
 
-    def _add_to_conversation_history(self, request, answer):
-        self.conversation_history.append({"role": "user", "content": request})
-        self.conversation_history.append({"role": "system", "content": answer})
+            except Exception as e:
+                errors += f"Error for game '{game}': {str(e)}\n"
 
-    def _log_prompt(self, prompt_text, response):
-        # create response folder if it does not exist
-        if not os.path.exists(f"RePrompt/context/{self.game}/responses"):
-            os.makedirs(f"RePrompt/context/{self.game}/responses")
+            self._log_output(output_folder, conversation, errors, generated_methods)
 
-        # Save the response together with prompt to file
-        timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        log = prompt_text + "\n---------------\n" + response
-        with open(
-            f"RePrompt/context/{self.game}/responses/{timestamp}_{self.seed}_{self.system_fingerprint}.txt",
-            "w",
-        ) as file:
-            file.write(log)
-            
-    def _format_prompt(self, template, context):
-        
+    def _extract_functions(self, response_text):
+        """
+        Naive function extraction - looks for 'def ' lines.
+        Customize this for more robust function extraction.
+        """
+        methods = []
+        lines = response_text.splitlines()
+        current_func = []
+        inside_func = False
+
+        for line in lines:
+            if line.strip().startswith("def "):
+                if current_func:
+                    methods.append("\n".join(current_func))
+                current_func = [line]
+                inside_func = True
+            elif inside_func:
+                current_func.append(line)
+
+        if current_func:
+            methods.append("\n".join(current_func))
+
+        return methods
