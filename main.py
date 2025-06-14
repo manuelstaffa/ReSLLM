@@ -1,4 +1,4 @@
-from reprompt.parse_config import ConfigParser  # , get_active_config
+from reprompt.parse_config import ConfigParser, get_active_config
 from reprompt.prompt_llm import RewardPrompter
 import tyro
 from dataclasses import dataclass
@@ -29,10 +29,19 @@ def main():
         "openai.temperature": args.temperature,
     }
     ConfigParser(path=args.config, overrides=overrides)
-    # config = get_active_config()
+    config = get_active_config()
 
-    prompter = RewardPrompter()
-    prompter.master_prompt()
+    games = config.get("env.games")
+    if not games:
+        raise ValueError("No games specified in the configuration.")
+    if not isinstance(games, list):
+        raise ValueError("The 'env.games' configuration must be a list of game names.")
+    if not all(isinstance(game, str) for game in games):
+        raise ValueError("All game names in 'env.games' must be strings.")
+
+    for game in games:
+        prompter = RewardPrompter(game=game)
+        prompter.master_prompt()
 
     """print(f"Final Configuration: {config}")
     print(

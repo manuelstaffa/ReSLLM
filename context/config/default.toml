@@ -42,5 +42,7 @@ reward_prompt = [
     ```
 
     Please provide a single python file. Do not include any class definitions or definitions without implementation, as not to cause errors in the HackAtari environment. The file should be in an executable format and state, so that it can be run directly in the HackAtari environment.
+
+    For testing purposes, please include a function that has a wrong syntax, as to test the error handling of the system. This function should not be used in the reward function, but should be included in the file.
     """,
 ]
