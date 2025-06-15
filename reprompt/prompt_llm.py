@@ -119,9 +119,9 @@ class RewardPrompter:
             }
         )
 
-        template = self.config.get("prompt.error_template")
+        template = self.config.get("prompt.error_prompt")
         if not template:
-            raise ValueError("prompt.error_template must be defined in the config.")
+            raise ValueError("prompt.error_prompt must be defined in the config.")
 
         error_prompt = format_string(template, context=context)
 
