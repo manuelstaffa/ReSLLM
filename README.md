@@ -8,8 +8,7 @@ General file structure of RePrompt.
 RePrompt
 ├── context
 │   ├── config
-│   │   ├── default.toml
-│   │   └── default.yaml
+│   │   └── <config>.toml
 │   └── games
 │       ├── game_objects.py
 │       └── <game>
@@ -24,12 +23,11 @@ RePrompt
 │           ├── config.toml
 │           └── reward_function.py
 ├── reprompt
-│   ├── build_prompt.py
+│   ├── parse_config.py
 │   ├── prompt_llm.py
-│   ├── test_grader.py
-│   └── test_response.py
+│   └── utils.py
 ├── secret
-│   └── openai-api-key.txt
+│   └── openai-api-key
 ├── main.py
 ├── requirements.txt
 └── README.md
