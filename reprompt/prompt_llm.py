@@ -1,10 +1,11 @@
 from reprompt.parse_config import get_active_config
 from reprompt.utils import format_string, read_file
-from repormpt.extract_functions import (
+from reprompt.extract_functions import (
     extract_all_functions,
     remove_duplicate_functions,
     check_function_syntax,
     replace_function,
+    get_function_name,
 )
 import os
 import re
@@ -223,6 +224,7 @@ class RewardPrompter:
         ######################################################
         # Initialize conversation and output structures
         ######################################################
+        print(f"Starting prompt generation for game '{self.game}'...")
         context = self._get_context()
 
         generated_functions = []
@@ -279,25 +281,38 @@ class RewardPrompter:
             try:
                 for function in generated_functions:
                     success, syntax_error = check_function_syntax(function)
+                    function_name = get_function_name(function)
 
                     if success:
                         continue
 
-                    print(f"Syntax error in function: {function}")
+                    print(f"Syntax error in function: {function_name}")
                     errors.append(
-                        f"Syntax error in function:\n{function}\nError: {syntax_error}\n"
+                        f"Syntax error in function: {function_name}\n{function}\nError: {syntax_error}\n"
                     )
 
                     syntax_errors = True
                     self.max_retries -= 1
 
+                    print(
+                        f"Attempting to fix syntax error in function: {function_name}..."
+                    )
                     prompt_text = self._get_error_prompt(context, errors, function)
                     conversation.append({"role": "user", "content": prompt_text})
                     response_text = self._call_openai(conversation)
                     conversation.append({"role": "assistant", "content": response_text})
+                    print(
+                        f"Response received for syntax fix attempt for game '{self.game}'."
+                    )
 
                     fixed_functions = extract_all_functions(response_text)
+                    print(
+                        f"Extracted {len(fixed_functions)} fixed functions from response."
+                    )
                     if fixed_functions:
+                        print(
+                            f"Replacing function in generated functions for game '{self.game}'."
+                        )
                         for fixed_function in fixed_functions:
                             replace_function(generated_functions, fixed_function)
                     else:
@@ -307,6 +322,7 @@ class RewardPrompter:
                         )
 
                 if not syntax_errors:
+                    print(f"All functions have valid syntax for game '{self.game}'.")
                     break
             except Exception as e:
                 print(f"Error checking syntax for game '{self.game}': {str(e)}")
@@ -317,9 +333,12 @@ class RewardPrompter:
         ######################################################
         # Check functions in HackAtari and fix errors
         ######################################################
+        print(f"Validating functions in HackAtari for game '{self.game}'...")
         # TODO: Implement HackAtari integration to validate functions
 
         ######################################################
         # Log all outputs: conversation, errors, and functions
         ######################################################
+        print(f"Logging output for game '{self.game}' to folder: {output_folder}")
         self._log_output(output_folder, conversation, errors, generated_functions)
+        print(f"Output logged successfully for game '{self.game}'.")

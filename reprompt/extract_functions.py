@@ -36,7 +36,7 @@ def _extract_functions(text: str) -> list[str]:
     return [m.strip("\n") for m in matches]
 
 
-def _get_function_name(func_code: str) -> str | None:
+def get_function_name(func_code: str) -> str | None:
     """
     Extract the function name from a function code string.
 
@@ -83,7 +83,7 @@ def remove_duplicate_functions(functions: list[str]) -> list[str]:
     seen = set()
     unique_functions = []
     for func in functions:
-        func_name = _get_function_name(func)
+        func_name = get_function_name(func)
         if func_name not in seen:
             seen.add(func_name)
             unique_functions.append(func)
@@ -121,7 +121,7 @@ def replace_function(functions: list[str], new_function: str) -> list[str]:
     Returns:
         list[str]: Updated list of function code strings.
     """
-    new_func_name = _get_function_name(new_function)
+    new_func_name = get_function_name(new_function)
     if new_func_name is None:
         raise ValueError("Provided code does not contain a valid function definition.")
 
@@ -129,7 +129,7 @@ def replace_function(functions: list[str], new_function: str) -> list[str]:
     replaced = False
 
     for func in functions:
-        func_name = _get_function_name(func)
+        func_name = get_function_name(func)
         if func_name == new_func_name:
             updated_functions.append(new_function)
             replaced = True
