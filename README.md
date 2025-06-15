@@ -10,8 +10,8 @@ RePrompt
 │   ├── config
 │   │   ├── default.toml
 │   │   └── default.yaml
-│   ├── game_objects.py
 │   └── games
+│       ├── game_objects.py
 │       └── <game>
 │           ├── game_description.txt
 │           ├── game_objects.py
@@ -51,12 +51,19 @@ Config Parser for RePrompt.
 
 Access config:  
 ```python
+from reprompt.parse_config import ConfigParser
+
+overrides = {
+    "<key>": <value>,
+}
 ConfigParser(path=args.config, overrides=overrides)  
 config = get_active_config()  
 ```
 
 Access config values:  
 ```python
+from reprompt.parse_config import get_active_config
+
 config.get('<category>')  
 config.get('<category>.<value>')  
 # config['<category>']
@@ -64,10 +71,12 @@ config.get('<category>.<value>')
 # config["<category>.<value>"]
 ```
 
-Custom format:
+Custom string formatter:
 ```python
+from reprompt.utils import format_string
+
 context = {
     "<key>": <value>,
 }
-prompt = config.format("<fstring as string>", context=context)
+prompt = format_string("<string with {key}>", context=context)
 ```

@@ -2,7 +2,7 @@ import ast
 import string
 
 
-def format_prompt(template, context):
+def format_string(template, context):
     """
     Format a template string by replacing placeholders with context values.
 

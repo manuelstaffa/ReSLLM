@@ -3,7 +3,7 @@ import re
 import datetime
 from openai import OpenAI
 from reprompt.parse_config import get_active_config
-from reprompt.utils import format_prompt, read_file
+from reprompt.utils import format_string, read_file
 
 
 class RewardPrompter:
@@ -67,7 +67,7 @@ class RewardPrompter:
         if not system_prompt:
             raise ValueError("prompt.system_prompt must be defined in the config.")
 
-        system_prompt = format_prompt(system_prompt, context=context)
+        system_prompt = format_string(system_prompt, context=context)
 
         return system_prompt
 
@@ -87,7 +87,7 @@ class RewardPrompter:
         templates = self.config.get("prompt.reward_prompt")
 
         if isinstance(templates, list):
-            return [format_prompt(template, context=context) for template in templates]
+            return [format_string(template, context=context) for template in templates]
         else:
             raise ValueError("prompt.reward_prompt must be a list of strings.")
 
@@ -114,7 +114,7 @@ class RewardPrompter:
         if not template:
             raise ValueError("prompt.error_template must be defined in the config.")
 
-        error_prompt = format_prompt(template, context=context)
+        error_prompt = format_string(template, context=context)
 
         return error_prompt
 
@@ -300,7 +300,7 @@ class RewardPrompter:
         while attempt < self.max_retries and generated_methods and has_errors:
             try:
                 for method in generated_methods:
-                    syntax_error = self._check_syntax(method)
+                    success, syntax_error = self._check_syntax(method)
                     if syntax_error:
                         has_errors = True
                         errors += f"Syntax error in method:\n{method}\nError: {syntax_error}\n"
