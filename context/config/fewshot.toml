@@ -34,8 +34,9 @@ reward_prompt = [
 
     The functions should be written in Python and should be compatible with the HackAtari environment, which is based on the OpenAI Gym environment. Please ensure that the functions are well-documented and follow best practices for coding style. The functions should be designed to be used in a reinforcement learning context, where they can be called to retrieve information about the game state.
 
-    Do not include any class definitions or definitions without implementation, as not to cause errors in the HackAtari environment. The file should be in an executable format and state, so that it can be run directly in the HackAtari environment.
+    Do not include any class definitions or definitions without implementation, as not to cause errors in the HackAtari environment. Do not modify the game state. The file should be in an executable format and state, so that it can be run directly in the HackAtari environment.
     """,
+
     """
     Now use your previously generated functions to create the actual reward function for the game {game}. The reward function should be designed to encourage the agent to learn effectively and efficiently. Please don't use undefined variables or functions.
 
@@ -55,6 +56,6 @@ reward_prompt = [
         return reward
     ```
 
-    Please provide a single python file. Do not include any class definitions or definitions without implementation, as not to cause errors in the HackAtari environment. The file should be in an executable format and state, so that it can be run directly in the HackAtari environment.
+    Please provide a single python file. Do not include any class definitions or definitions without implementation, as not to cause errors in the HackAtari environment. Do not modify the game state. The file should be in an executable format and state, so that it can be run directly in the HackAtari environment.
     """,
 ]

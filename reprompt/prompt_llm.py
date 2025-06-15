@@ -1,9 +1,15 @@
+from reprompt.parse_config import get_active_config
+from reprompt.utils import format_string, read_file
+from repormpt.extract_functions import (
+    extract_all_functions,
+    remove_duplicate_functions,
+    check_function_syntax,
+    replace_function,
+)
 import os
 import re
 import datetime
 from openai import OpenAI
-from reprompt.parse_config import get_active_config
-from reprompt.utils import format_string, read_file
 
 
 class RewardPrompter:
@@ -12,7 +18,7 @@ class RewardPrompter:
     Manages prompt generation, API communication, output organization, and logging.
     """
 
-    def __init__(self, game, seed=None) -> None:
+    def __init__(self, game: str, seed: int | None = None) -> None:
         """
         Initialize the RewardPrompter with configuration and API setup.
 
@@ -50,7 +56,7 @@ class RewardPrompter:
 
             return api_key
 
-    def _get_system_prompt(self, context) -> str:
+    def _get_system_prompt(self, context: dict) -> str:
         """
         Retrieve the system prompt from the configuration.
 
@@ -71,7 +77,7 @@ class RewardPrompter:
 
         return system_prompt
 
-    def _get_prompts(self, context) -> list[str]:
+    def _get_prompts(self, context: dict) -> list[str]:
         """
         Generate prompt(s) for a given game based on configuration.
 
@@ -91,7 +97,9 @@ class RewardPrompter:
         else:
             raise ValueError("prompt.reward_prompt must be a list of strings.")
 
-    def _get_error_prompt(self, context, error_message, function_name) -> str:
+    def _get_error_prompt(
+        self, context: dict, error_message: str, function_name: str
+    ) -> str:
         """
         Generate an error prompt for a given game.
 
@@ -118,67 +126,7 @@ class RewardPrompter:
 
         return error_prompt
 
-    def _create_output_folder(self) -> str:
-        """
-        Create a timestamped output folder for a game's prompt results.
-
-        Returns:
-            str: Path to the created output folder.
-        """
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        config_name = self.config.get("general.config_name")
-        output_folder = f"out/{self.game}/{timestamp}-{config_name}"
-        os.makedirs(output_folder, exist_ok=True)
-
-        return output_folder
-
-    def _extract_functions(self, responses) -> list[str]:
-        """
-        Extract all Python code blocks from a list of LLM responses.
-
-        Args:
-            responses (list of str): List of LLM responses containing Python code blocks.
-
-        Returns:
-            list of str: List of extracted Python code blocks.
-        """
-        code_blocks = []
-        code_pattern = re.compile(r"```(?:python)?(.*?)```", re.DOTALL | re.IGNORECASE)
-
-        for response in responses:
-            matches = code_pattern.findall(response)
-            for code in matches:
-                code_blocks.append(code.strip())
-
-        return code_blocks
-
-    def _log_output(self, folder, conversation, errors, methods) -> None:
-        """
-        Log conversation, errors, and the combined reward function code to output files.
-
-        Args:
-            folder (str): Path to the output folder.
-            conversation (list of dict): List of conversation entries.
-            errors (str): Collected error messages, if any.
-            methods (list of str): List of extracted Python code blocks.
-        """
-        with open(os.path.join(folder, "conversation.txt"), "w") as f:
-            for entry in conversation:
-                f.write(f"{entry['role'].upper()}: {entry['content']}\n\n")
-
-        if errors:
-            with open(os.path.join(folder, "errors.txt"), "w") as f:
-                f.write(errors)
-
-        with open(os.path.join(folder, "reward_function.py"), "w") as f:
-            f.write(f"from ocatari.ram.{self.game} import *\n\n")
-            for method in methods:
-                f.write(method + "\n\n")
-
-        with open(os.path.join(folder, "config.toml"), "w") as f:
-            f.write(str(self.config))
-
-    def _call_openai(self, conversation) -> str:
+    def _call_openai(self, conversation: list[dict]) -> str:
         """
         Call the OpenAI chat completion API with the conversation.
 
@@ -197,64 +145,53 @@ class RewardPrompter:
 
         return response.choices[0].message.content.strip()
 
-    def _check_syntax(self, function_code: str) -> str | None:
+    def _create_output_folder(self) -> str:
         """
-        Check the syntax of a single Python function.
-
-        Args:
-            function_code (str): The Python function code as a string.
+        Create a timestamped output folder for a game's prompt results.
 
         Returns:
-            str or None: Returns the syntax error message if invalid, else None.
+            str: Path to the created output folder.
         """
-        try:
-            compile(function_code, "<string>", "exec")
-            return None
-        except SyntaxError as e:
-            return f"SyntaxError: {e.msg} at line {e.lineno}, offset {e.offset}"
-        except Exception as e:
-            return f"Error: {str(e)}"
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        config_name = self.config.get("general.config_name")
+        output_folder = f"out/{self.game}/{timestamp}-{config_name}"
+        os.makedirs(output_folder, exist_ok=True)
 
-    def _get_method_name(self, function_code: str) -> str | None:
+        return output_folder
+
+    def _log_output(
+        self,
+        folder: str,
+        conversation: list[dict],
+        errors: list[str],
+        functions: list[str],
+    ) -> None:
         """
-        Extracts the function name from a Python function definition string.
+        Log conversation, errors, and the combined reward function code to output files.
 
         Args:
-            function_code (str): The full Python function code.
-
-        Returns:
-            str or None: The function name if found, else None.
+            folder (str): Path to the output folder.
+            conversation (list of dict): List of conversation entries.
+            errors (list of str): Collected error messages, if any.
+            functions (list of str): List of extracted Python code blocks.
         """
-        match = re.search(r"def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(", function_code)
+        with open(os.path.join(folder, "conversation.txt"), "w") as f:
+            for entry in conversation:
+                f.write(f"{entry['role'].upper()}: {entry['content']}\n\n")
 
-        return match.group(1) if match else None
+        if errors:
+            with open(os.path.join(folder, "errors.txt"), "w") as f:
+                f.write("\n".join(errors))
 
-    def _remove_duplicate_methods(self, generated_methods: list[str]) -> list[str]:
-        """
-        Remove duplicate methods from the list based on their function names,
-        preserving the first occurrence of each function.
+        with open(os.path.join(folder, "reward_function.py"), "w") as f:
+            f.write(f"from ocatari.ram.{self.game} import *\n\n")
+            for method in functions:
+                f.write(method + "\n\n")
 
-        Args:
-            generated_methods (list of str): List of Python function code strings.
+        with open(os.path.join(folder, "config.toml"), "w") as f:
+            f.write(str(self.config))
 
-        Returns:
-            list of str: List with duplicates removed.
-        """
-        seen = set()
-        unique_methods = []
-
-        for method in generated_methods:
-            name = self._get_method_name(method)
-            if name and name not in seen:
-                seen.add(name)
-                unique_methods.append(method)
-            elif not name:
-                # If no function name found, keep it (or skip depending on your policy)
-                unique_methods.append(method)
-
-        return unique_methods
-
-    def _define_context(self) -> dict:
+    def _get_context(self) -> dict:
         """
         Define the context for the game, including game name and any other relevant details.
 
@@ -283,91 +220,106 @@ class RewardPrompter:
         Main execution loop: iterates through configured games, generates prompts,
         calls OpenAI API, extracts reward functions, and logs all output.
         """
-
         ######################################################
         # Initialize conversation and output structures
         ######################################################
-        context = self._define_context()
+        context = self._get_context()
 
-        system_prompt = self._get_system_prompt(context)
-        conversation = [{"role": "system", "content": system_prompt}]
-
-        generated_methods = []
-        errors = ""
+        generated_functions = []
+        errors = []
         output_folder = self._create_output_folder()
 
         ######################################################
-        # Generate initial prompts and call OpenAI API
+        # Generate initial prompt and call OpenAI API
+        ######################################################
+        try:
+            print(f"Getting system prompt for game '{self.game}'...")
+            system_prompt = self._get_system_prompt(context)
+            conversation = [{"role": "system", "content": system_prompt}]
+        except ValueError as e:
+            print(f"Error generating system prompt for game '{self.game}': {str(e)}")
+            errors.append(f"Error for game '{self.game}': {str(e)}\n")
+
+        ######################################################
+        # Call OpenAI API to generate reward functions
         ######################################################
         try:
             prompts = self._get_prompts(context)
-            for prompt_text in prompts:
+            for idx, prompt_text in enumerate(prompts):
+                print(
+                    f"Generating prompt {idx + 1}/{len(prompts)} for game '{self.game}'..."
+                )
                 conversation.append({"role": "user", "content": prompt_text})
                 response_text = self._call_openai(conversation)
                 conversation.append({"role": "assistant", "content": response_text})
-
-                extracted_methods = self._extract_functions([response_text])
-                generated_methods.extend(extracted_methods)
+                print(f"Response received for prompt {idx + 1}/{len(prompts)}.")
+                extracted_functions = extract_all_functions(response_text)
+                print(f"Extracted {len(extracted_functions)} functions from response.")
+                generated_functions.extend(extracted_functions)
         except Exception as e:
             print(f"Error generating prompts for game '{self.game}': {str(e)}")
-            errors += f"Error for game '{self.game}': {str(e)}\n"
-
-        if not generated_methods:
-            raise ValueError(f"No valid methods generated for game '{self.game}'.")
+            errors.append(f"Error for game '{self.game}': {str(e)}\n")
 
         ######################################################
-        # Check syntax of generated methods and fix errors
+        # Deduplicate functions
         ######################################################
-        # TODO: fix error handling
+        print(f"Deduplicating functions for game '{self.game}'...")
+        if generated_functions:
+            generated_functions = remove_duplicate_functions(generated_functions)
+        else:
+            print(f"No valid functions generated for game '{self.game}'.")
+            errors.append(f"No valid functions generated for game '{self.game}'.\n")
 
-        attempt = 0
-        has_errors = False
-        while attempt < self.max_retries and generated_methods and has_errors:
+        ######################################################
+        # Check syntax of generated functions and fix errors
+        ######################################################
+        print(f"Checking syntax of generated functions for game '{self.game}'...")
+        while self.max_retries > 0:
+            syntax_errors = False
             try:
-                for method in generated_methods:
-                    success, syntax_error = self._check_syntax(method)
-                    if syntax_error:
-                        has_errors = True
-                        errors += f"Syntax error in method:\n{method}\nError: {syntax_error}\n"
-                    else:
+                for function in generated_functions:
+                    success, syntax_error = check_function_syntax(function)
+
+                    if success:
                         continue
 
-                    prompt_text = self._get_error_prompt(
-                        self.game, syntax_error, method
+                    print(f"Syntax error in function: {function}")
+                    errors.append(
+                        f"Syntax error in function:\n{function}\nError: {syntax_error}\n"
                     )
+
+                    syntax_errors = True
+                    self.max_retries -= 1
+
+                    prompt_text = self._get_error_prompt(context, errors, function)
                     conversation.append({"role": "user", "content": prompt_text})
                     response_text = self._call_openai(conversation)
                     conversation.append({"role": "assistant", "content": response_text})
 
-                    fixed_methods = self._extract_functions([response_text])
-                    if fixed_methods:
-                        gen_methods_dict = {
-                            self._get_method_name(method): method
-                            for method in generated_methods
-                            if self._get_method_name(method)
-                        }
+                    fixed_functions = extract_all_functions(response_text)
+                    if fixed_functions:
+                        for fixed_function in fixed_functions:
+                            replace_function(generated_functions, fixed_function)
                     else:
-                        errors += f"Failed to fix method: {method}\n"
-                        continue
+                        print(f"Failed to fix function: {function}")
+                        errors.append(
+                            f"Failed to fix function:\n{function}\nError: {syntax_error}\n"
+                        )
 
-                    for fixed in fixed_methods:
-                        fixed_name = self._get_method_name(fixed)
-                        if fixed_name in gen_methods_dict:
-                            idx = generated_methods.index(gen_methods_dict[fixed_name])
-                            generated_methods[idx] = fixed
-                            gen_methods_dict[fixed_name] = fixed
-                        else:
-                            generated_methods.append(fixed)
-                            gen_methods_dict[fixed_name] = fixed
+                if not syntax_errors:
+                    break
             except Exception as e:
-                errors += f"Error checking syntax for game '{self.game}': {str(e)}\n"
+                print(f"Error checking syntax for game '{self.game}': {str(e)}")
+                errors.append(
+                    f"Error checking syntax for game '{self.game}': {str(e)}\n"
+                )
 
         ######################################################
-        # Check methods in HackAtari and fix errors
+        # Check functions in HackAtari and fix errors
         ######################################################
-        # TODO: Implement HackAtari integration to validate methods
+        # TODO: Implement HackAtari integration to validate functions
 
         ######################################################
-        # Log all outputs: conversation, errors, and methods
+        # Log all outputs: conversation, errors, and functions
         ######################################################
-        self._log_output(output_folder, conversation, errors, generated_methods)
+        self._log_output(output_folder, conversation, errors, generated_functions)

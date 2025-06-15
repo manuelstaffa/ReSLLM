@@ -1,5 +1,12 @@
 # RePrompt
 
+## Important Prompt Properties
+- Explain the function shape
+- Explain not to use undefined objects/variable
+- Explain to only provide full implementations
+- Explain not to provide changes to game state
+
+
 ## Structure
 
 General file structure of RePrompt.
