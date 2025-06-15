@@ -12,7 +12,7 @@ class RewardPrompter:
     Manages prompt generation, API communication, output organization, and logging.
     """
 
-    def __init__(self, game, seed=None):
+    def __init__(self, game, seed=None) -> None:
         """
         Initialize the RewardPrompter with configuration and API setup.
 
@@ -27,7 +27,7 @@ class RewardPrompter:
         self.max_retries = self.config.get("prompt.max_retries")
         self.seed = seed
 
-    def _get_api_key(self):
+    def _get_api_key(self) -> str:
         """
         Retrieve or prompt for OpenAI API key.
 
@@ -50,7 +50,7 @@ class RewardPrompter:
 
             return api_key
 
-    def _get_system_prompt(self, context):
+    def _get_system_prompt(self, context) -> str:
         """
         Retrieve the system prompt from the configuration.
 
@@ -71,7 +71,7 @@ class RewardPrompter:
 
         return system_prompt
 
-    def _get_prompts(self, context):
+    def _get_prompts(self, context) -> list[str]:
         """
         Generate prompt(s) for a given game based on configuration.
 
@@ -91,7 +91,7 @@ class RewardPrompter:
         else:
             raise ValueError("prompt.reward_prompt must be a list of strings.")
 
-    def _get_error_prompt(self, context, error_message, function_name):
+    def _get_error_prompt(self, context, error_message, function_name) -> str:
         """
         Generate an error prompt for a given game.
 
@@ -118,7 +118,7 @@ class RewardPrompter:
 
         return error_prompt
 
-    def _create_output_folder(self):
+    def _create_output_folder(self) -> str:
         """
         Create a timestamped output folder for a game's prompt results.
 
@@ -132,7 +132,7 @@ class RewardPrompter:
 
         return output_folder
 
-    def _extract_functions(self, responses):
+    def _extract_functions(self, responses) -> list[str]:
         """
         Extract all Python code blocks from a list of LLM responses.
 
@@ -152,7 +152,7 @@ class RewardPrompter:
 
         return code_blocks
 
-    def _log_output(self, folder, conversation, errors, methods):
+    def _log_output(self, folder, conversation, errors, methods) -> None:
         """
         Log conversation, errors, and the combined reward function code to output files.
 
@@ -178,7 +178,7 @@ class RewardPrompter:
         with open(os.path.join(folder, "config.toml"), "w") as f:
             f.write(str(self.config))
 
-    def _call_openai(self, conversation):
+    def _call_openai(self, conversation) -> str:
         """
         Call the OpenAI chat completion API with the conversation.
 
@@ -229,7 +229,32 @@ class RewardPrompter:
 
         return match.group(1) if match else None
 
-    def _define_context(self):
+    def _remove_duplicate_methods(self, generated_methods: list[str]) -> list[str]:
+        """
+        Remove duplicate methods from the list based on their function names,
+        preserving the first occurrence of each function.
+
+        Args:
+            generated_methods (list of str): List of Python function code strings.
+
+        Returns:
+            list of str: List with duplicates removed.
+        """
+        seen = set()
+        unique_methods = []
+
+        for method in generated_methods:
+            name = self._get_method_name(method)
+            if name and name not in seen:
+                seen.add(name)
+                unique_methods.append(method)
+            elif not name:
+                # If no function name found, keep it (or skip depending on your policy)
+                unique_methods.append(method)
+
+        return unique_methods
+
+    def _define_context(self) -> dict:
         """
         Define the context for the game, including game name and any other relevant details.
 
