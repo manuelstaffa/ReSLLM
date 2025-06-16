@@ -245,6 +245,7 @@ class RewardPrompter:
         ######################################################
         # Call OpenAI API to generate reward functions
         ######################################################
+        # TODO:fix prompt (not fixing anything) (maybe replace?)
         try:
             prompts = self._get_prompts(context)
             for idx, prompt_text in enumerate(prompts):
