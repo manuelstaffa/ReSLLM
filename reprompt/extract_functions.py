@@ -28,11 +28,11 @@ def _extract_functions(text: str) -> list[str]:
     """
     pattern = r"""
         (^def\s+\w+\(.*?\):           # function header line
-        (?:\n[ \t]+.*?)*              # indented lines of function body (including blank lines)
-        )
+        (?:\n[ \t]+.*?)*)             # indented lines of function body (including blank lines)
         (?=^def\s|\Z)                 # lookahead for next function start or end of text
     """
     matches = re.findall(pattern, text, re.MULTILINE | re.DOTALL | re.VERBOSE)
+
     return [m.strip("\n") for m in matches]
 
 
@@ -47,6 +47,7 @@ def get_function_name(func_code: str) -> str | None:
         str: The name of the function.
     """
     match = re.match(r"def\s+(\w+)\s*\(", func_code)
+
     return match.group(1) if match else None
 
 
@@ -87,6 +88,7 @@ def remove_duplicate_functions(functions: list[str]) -> list[str]:
         if func_name not in seen:
             seen.add(func_name)
             unique_functions.append(func)
+
     return unique_functions
 
 
