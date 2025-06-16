@@ -1,5 +1,5 @@
 [general]
-config_name = "test_errors"
+config_name = "default"
 
 [env]
 games = ["Freeway"]
