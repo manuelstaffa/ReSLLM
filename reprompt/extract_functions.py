@@ -50,7 +50,7 @@ def get_function_name(func_code: str) -> str | None:
     return match.group(1) if match else None
 
 
-def extract_all_functions(text: str) -> list[tuple[str, bool, str | None]]:
+def extract_all_functions(text: str) -> list[str]:
     """
     Extract all functions from the text and check their syntax.
 
@@ -58,7 +58,7 @@ def extract_all_functions(text: str) -> list[tuple[str, bool, str | None]]:
         text (str): The input text containing function definitions.
 
     Returns:
-        list: A list of tuples with function code and syntax check result.
+        list: A list of strings with function code.
     """
     code_blocks = _extract_code_blocks(text)
     all_functions = []

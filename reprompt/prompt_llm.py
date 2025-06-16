@@ -8,7 +8,6 @@ from reprompt.extract_functions import (
     get_function_name,
 )
 import os
-import re
 import datetime
 from openai import OpenAI
 
@@ -138,13 +137,14 @@ class RewardPrompter:
             str: The content of the assistant's reply.
         """
         response = self.client.chat.completions.create(
-            messages=conversation,
+            messages=conversation,  # type: ignore
             model=self.model,
             seed=self.seed,
             temperature=self.temperature,
         )
 
-        return response.choices[0].message.content.strip()
+        content = response.choices[0].message.content
+        return content.strip() if content is not None else ""
 
     def _create_output_folder(self) -> str:
         """
@@ -227,9 +227,10 @@ class RewardPrompter:
         print(f"Starting prompt generation for game '{self.game}'...")
         context = self._get_context()
 
-        generated_functions = []
-        errors = []
         output_folder = self._create_output_folder()
+        conversation = []
+        errors = []
+        generated_functions = []
 
         ######################################################
         # Generate initial prompt and call OpenAI API
@@ -298,7 +299,11 @@ class RewardPrompter:
                     print(
                         f"Attempting to fix syntax error in function: {function_name}..."
                     )
-                    prompt_text = self._get_error_prompt(context, errors, function)
+                    prompt_text = self._get_error_prompt(
+                        context,
+                        syntax_error if syntax_error is not None else "",
+                        function,
+                    )
                     conversation.append({"role": "user", "content": prompt_text})
                     response_text = self._call_openai(conversation)
                     conversation.append({"role": "assistant", "content": response_text})

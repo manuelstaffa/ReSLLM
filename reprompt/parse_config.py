@@ -1,5 +1,6 @@
 import tomlkit
 import os
+from typing import Any
 
 
 _active_config = None
@@ -68,7 +69,7 @@ class ConfigParser:
             d = d[k]
         d[keys[-1]] = value
 
-    def _get_nested(self, d, key) -> None:
+    def _get_nested(self, d, key) -> Any:
         """
         Retrieve nested dictionary value by dot-separated key.
 
@@ -84,7 +85,7 @@ class ConfigParser:
             d = d[k]
         return d
 
-    def get(self, key, default=None) -> None:
+    def get(self, key, default=None) -> Any:
         """
         Get a config value by key.
 
@@ -103,7 +104,7 @@ class ConfigParser:
             else:
                 raise KeyError(f"Config key '{key}' not found and no default provided.")
 
-    def __getitem__(self, key) -> None:
+    def __getitem__(self, key) -> Any:
         return self._get_nested(self.config, key)
 
     def __contains__(self, key) -> bool:

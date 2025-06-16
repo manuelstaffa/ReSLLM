@@ -8,7 +8,7 @@ from typing import Optional, Annotated, Literal
 @dataclass
 class Args:
     try:
-        config: Annotated[str, tyro.conf.arg(aliases=["-c"])] = "default.toml"
+        config: Annotated[str, tyro.conf.arg(aliases=["-c"])] = "default.toml"  # type: ignore
         """Path to configuration TOML file."""
     except Exception:
         config: str = "default.toml"
