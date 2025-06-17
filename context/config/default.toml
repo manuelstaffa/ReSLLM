@@ -1,5 +1,6 @@
 [general]
 config_name = "default"
+clear = false
 
 [env]
 games = ["Freeway"]

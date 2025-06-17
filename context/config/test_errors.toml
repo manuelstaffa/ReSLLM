@@ -1,5 +1,6 @@
 [general]
 config_name = "test_errors"
+clear = false
 
 [env]
 games = ["Freeway"]
