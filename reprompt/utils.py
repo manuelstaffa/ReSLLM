@@ -35,8 +35,15 @@ def read_file(path: str, default: Any = None) -> str:
     """
     Read the content of a file.
 
+    Args:
+        path (str): Path to the file to read.
+        default (Any, optional): Default value to return if the file is not found.
+
     Returns:
         str: The content of the file.
+
+    Raises:
+        FileNotFoundError: If the file does not exist and no default is provided.
     """
     try:
         with open(path, "r") as file:

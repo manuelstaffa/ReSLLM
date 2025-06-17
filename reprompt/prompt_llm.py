@@ -25,6 +25,9 @@ class RewardPrompter:
         Initialize the RewardPrompter with configuration and API setup.
 
         Args:
+            config (ConfigParser): Configuration parser instance with settings.
+            game (str): Name of the Atari game to generate prompts for.
+            context (dict): Context dictionary with game-specific information.
             seed (int, optional): Seed for deterministic output (if supported by model).
         """
         self.client = OpenAI(api_key=self._get_api_key())

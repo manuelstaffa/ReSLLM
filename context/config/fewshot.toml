@@ -42,15 +42,6 @@ reward_prompt = [
     """
     Now use your previously generated functions to create the actual reward function for the game {game}. The reward function should be designed to encourage the agent to learn effectively and efficiently. Please don't use undefined variables or functions.
 
-    Here is the parent game object:
-    {parent_objects}
-
-    Here are the game objects that are relevant for the reward function for this game:
-    {game_objects}
-
-    Here is the description of the game:
-    {game_description}
-
     The reward function should have the following shape and name:
     ```python
     def reward_function(game_objects) -> float:
