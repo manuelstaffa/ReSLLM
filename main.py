@@ -24,6 +24,9 @@ class Args:
     seed: Optional[int] = None
     """Seed for random number generation."""
 
+    clear: bool = False
+    """Clear previous runs with the same configuration."""
+
 
 def main():
     args = tyro.cli(Args)
@@ -31,7 +34,9 @@ def main():
     overrides = {
         "openai.model": args.model,
         "openai.temperature": args.temperature,
+        "general.clear": args.clear,
     }
+
     ConfigParser(path=args.config, overrides=overrides)
     config = get_active_config()
 

@@ -1,5 +1,6 @@
 tomlkit
 os
+shutil
 re
 datetime
 openai

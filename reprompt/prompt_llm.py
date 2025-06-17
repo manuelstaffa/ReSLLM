@@ -8,6 +8,7 @@ from reprompt.extract_functions import (
     get_function_name,
 )
 import os
+import shutil
 import datetime
 from openai import OpenAI
 
@@ -161,7 +162,14 @@ class RewardPrompter:
         """
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         config_name = self.config.get("general.config_name")
-        output_folder = f"out/{self.game}/{timestamp}-{config_name}"
+        game_folder = os.path.join("out", self.game)
+
+        if self.config.get("general.clear", False) and os.path.exists(game_folder):
+            for name in os.listdir(game_folder):
+                if name.endswith(f"-{config_name}"):
+                    shutil.rmtree(os.path.join(game_folder, name))
+
+        output_folder = os.path.join(game_folder, f"{timestamp}-{config_name}")
         os.makedirs(output_folder, exist_ok=True)
 
         return output_folder
