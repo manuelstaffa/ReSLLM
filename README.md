@@ -82,7 +82,7 @@ Specified in <config_name>.toml, with applicable overrides specified below.
 
 Config Parser for RePrompt.
 
-Access config:  
+Create config parser:  
 ```python
 from reprompt.parse_config import ConfigParser
 
@@ -90,12 +90,13 @@ overrides = {
     "<key>": <value>,
 }
 ConfigParser(path=args.config, overrides=overrides)  
-config = get_active_config()  
 ```
 
 Access config values:  
 ```python
 from reprompt.parse_config import get_active_config
+
+config = get_active_config
 
 config.get('<category>')  
 config.get('<category>.<value>')  
