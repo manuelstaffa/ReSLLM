@@ -45,6 +45,7 @@ def main():
         raise ValueError("All game names in 'env.games' must be strings.")
 
     for game in games:
+        """
         parent_objects = read_file("context/games/game_objects.py", default="")
         game_objects = read_file(f"context/games/{game}/game_objects.py", default="")
         ram_extraction = read_file(f"context/games/{game}/{game}.py", default="")
@@ -54,16 +55,23 @@ def main():
         game_description_long = read_file(
             f"context/games/{game}/game_description_long.txt", default=""
         )
+        """
 
         context = {
             "game": game,
             "model": config.get("openai.model"),
             "temperature": config.get("openai.temperature"),
-            "parent_objects": parent_objects,
-            "game_objects": game_objects,
-            "ram_extraction": ram_extraction,
-            "game_description": game_description,
-            "game_description_long": game_description_long,
+            "parent_objects": read_file("context/games/game_objects.py", default=""),
+            "game_objects": read_file(
+                f"context/games/{game}/game_objects.py", default=""
+            ),
+            "ram_extraction": read_file(f"context/games/{game}/{game}.py", default=""),
+            "game_description": read_file(
+                f"context/games/{game}/game_description.txt", default=""
+            ),
+            "game_description_long": read_file(
+                f"context/games/{game}/game_description_long.txt", default=""
+            ),
         }
 
         prompter = RewardPrompter(
