@@ -209,6 +209,7 @@ class RewardPrompter:
             "seed": self.seed,
             "parent_objects": read_file("context/games/game_objects.py"),
             "game_objects": read_file(f"context/games/{self.game}/game_objects.py"),
+            "ram_extraction": read_file(f"context/games/{self.game}/{self.game}.py"),
             "game_description": read_file(
                 f"context/games/{self.game}/game_description.txt"
             ),

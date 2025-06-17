@@ -18,4 +18,4 @@ reward_prompt = ["""
     """]
 
 # Placeholder for context variables
-# {game}, {model}, {parent_objects}, {game_objects}, {game_description}, {function_name}, {error_message}
+# {game}, {model}, {parent_objects}, {game_objects}, {ram_extraction}, {game_description}, {function_name}, {error_message}
