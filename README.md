@@ -25,7 +25,6 @@ Current placeholder options
 | `{ram_extraction}` | OC_Atari ram extraction |
 | `{game_description}` | Textual game description |
 | `{game_description_long}` | Long textual game description |
-| `{placeholder}` | Description |
 
 Additional placeholders for the error prompt
 
