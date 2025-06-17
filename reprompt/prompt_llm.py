@@ -1,5 +1,5 @@
 from reprompt.parse_config import ConfigParser
-from reprompt.utils import format_string, read_file
+from reprompt.utils import format_string
 from reprompt.extract_functions import (
     extract_all_functions,
     remove_duplicate_functions,
@@ -195,31 +195,6 @@ class RewardPrompter:
         with open(os.path.join(folder, "config.toml"), "w") as f:
             f.write(str(self.config))
 
-    def _get_context(self) -> dict:
-        """
-        Define the context for the game, including game name and any other relevant details.
-
-        Args:
-            game (str): The name of the game.
-
-        Returns:
-            dict: Context dictionary with game-specific information.
-        """
-        context = {
-            "game": self.game,
-            "model": self.model,
-            "temperature": self.temperature,
-            "seed": self.seed,
-            "parent_objects": read_file("context/games/game_objects.py"),
-            "game_objects": read_file(f"context/games/{self.game}/game_objects.py"),
-            "ram_extraction": read_file(f"context/games/{self.game}/{self.game}.py"),
-            "game_description": read_file(
-                f"context/games/{self.game}/game_description.txt"
-            ),
-        }
-
-        return context
-
     def master_prompt(self):
         """
         Main execution loop: iterates through configured games, generates prompts,
@@ -229,19 +204,17 @@ class RewardPrompter:
         # Initialize conversation and output structures
         ######################################################
         print(f"Starting prompt generation for game '{self.game}'...")
-        context = self._get_context()
-
         output_folder = self._create_output_folder()
         conversation = []
-        errors = []
         generated_functions = []
+        errors = []
 
         ######################################################
         # Generate initial prompt and call OpenAI API
         ######################################################
         try:
             print(f"Getting system prompt for game '{self.game}'...")
-            system_prompt = self._get_system_prompt(context)
+            system_prompt = self._get_system_prompt(self.context)
             conversation = [{"role": "system", "content": system_prompt}]
         except ValueError as e:
             print(f"Error generating system prompt for game '{self.game}': {str(e)}")
@@ -252,7 +225,7 @@ class RewardPrompter:
         ######################################################
         # TODO:fix prompt (not fixing anything) (maybe replace?)
         try:
-            prompts = self._get_prompts(context)
+            prompts = self._get_prompts(self.context)
             for idx, prompt_text in enumerate(prompts):
                 print(
                     f"Generating prompt {idx + 1}/{len(prompts)} for game '{self.game}'..."
@@ -304,7 +277,7 @@ class RewardPrompter:
                         f"Attempting to fix syntax error in function: {function_name}..."
                     )
                     prompt_text = self._get_error_prompt(
-                        context,
+                        self.context,
                         syntax_error if syntax_error is not None else "",
                         function,
                     )

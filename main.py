@@ -36,6 +36,7 @@ def main():
     config = get_active_config()
 
     games = config.get("env.games")
+    games = list(map(lambda game: game.lower(), games))
     if not games:
         raise ValueError("No games specified in the configuration.")
     if not isinstance(games, list):
@@ -44,18 +45,25 @@ def main():
         raise ValueError("All game names in 'env.games' must be strings.")
 
     for game in games:
+        parent_objects = read_file("context/games/game_objects.py", default="")
+        game_objects = read_file(f"context/games/{game}/game_objects.py", default="")
+        ram_extraction = read_file(f"context/games/{game}/{game}.py", default="")
+        game_description = read_file(
+            f"context/games/{game}/game_description.txt", default=""
+        )
+        game_description_long = read_file(
+            f"context/games/{game}/game_description_long.txt", default=""
+        )
+
         context = {
             "game": game,
             "model": config.get("openai.model"),
             "temperature": config.get("openai.temperature"),
-            "seed": config.get("seed"),
-            "parent_objects": read_file("context/games/game_objects.py"),
-            "game_objects": read_file(f"context/games/{game}/game_objects.py"),
-            "ram_extraction": read_file(f"context/games/{game}/{game}.py"),
-            "game_description": read_file(f"context/games/{game}/game_description.txt"),
-            "game_description_long": read_file(
-                f"context/games/{game}/game_description_long.txt"
-            ),
+            "parent_objects": parent_objects,
+            "game_objects": game_objects,
+            "ram_extraction": ram_extraction,
+            "game_description": game_description,
+            "game_description_long": game_description_long,
         }
 
         prompter = RewardPrompter(

@@ -1,8 +1,9 @@
 import ast
 import string
+from typing import Any, Dict
 
 
-def format_string(template, context):
+def format_string(template: str, context: Dict[str, Any]) -> str:
     """
     Format a template string by replacing placeholders with context values.
 
@@ -30,19 +31,25 @@ def format_string(template, context):
     return template.format(**context)
 
 
-def read_file(path):
+def read_file(path: str, default: Any = None) -> str:
     """
     Read the content of a file.
 
     Returns:
         str: The content of the file.
     """
-    with open(path, "r") as file:
-        file_content = file.read().strip()
-        return file_content
+    try:
+        with open(path, "r") as file:
+            file_content = file.read().strip()
+            return file_content
+    except FileNotFoundError:
+        if default is not None:
+            return default
+        else:
+            raise FileNotFoundError(f"File not found: {path}")
 
 
-def check_function_syntax(code):
+def check_function_syntax(code: str) -> tuple[bool, str | None]:
     """
     Check syntax of a single Python function string.
 
