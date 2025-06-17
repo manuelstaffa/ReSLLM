@@ -1,4 +1,4 @@
-from reprompt.parse_config import get_active_config
+from reprompt.parse_config import ConfigParser
 from reprompt.utils import format_string, read_file
 from reprompt.extract_functions import (
     extract_all_functions,
@@ -18,20 +18,23 @@ class RewardPrompter:
     Manages prompt generation, API communication, output organization, and logging.
     """
 
-    def __init__(self, game: str, seed: int | None = None) -> None:
+    def __init__(
+        self, config: ConfigParser, game: str, context: dict, seed: int | None = None
+    ) -> None:
         """
         Initialize the RewardPrompter with configuration and API setup.
 
         Args:
             seed (int, optional): Seed for deterministic output (if supported by model).
         """
-        self.config = get_active_config()
         self.client = OpenAI(api_key=self._get_api_key())
+        self.config = config
         self.game = game.lower()
+        self.context = context
+        self.seed = seed
         self.model = self.config.get("openai.model")
         self.temperature = self.config.get("openai.temperature")
         self.max_retries = self.config.get("prompt.max_retries")
-        self.seed = seed
 
     def _get_api_key(self) -> str:
         """

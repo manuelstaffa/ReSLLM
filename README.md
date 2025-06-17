@@ -1,10 +1,38 @@
 # RePrompt
 
 ## Important Prompt Properties
-- Explain the function shape
-- Explain not to use undefined objects/variable
-- Explain to only provide full implementations
-- Explain not to provide changes to game state
+- Prompt: explannation of the function name/return for the reward function 
+- Prompt: do not to use undefined objects/variable
+- Prompt: only provide full implementations of classes nd functions (not just header/definition)
+- Prompt: do not to provide changes to game state
+- Error prompt: only provide updated functions 
+
+
+## Current prompt format placeholders
+
+```toml
+text = """This is a prompt for {game} with model {model}"""
+```
+
+Current placeholder options
+| Name | Value |
+|------|-------|
+| `{game}` | Current game the reward function is generated for |
+| `{model}` | Current OpenAI model |
+| `{temperature}` | Temperature to generate answers |
+| `{parent_object}` | Game object template with properties and functions |
+| `{game_objects}` | Game-specific objects |
+| `{ram_extraction}` | OC_Atari ram extraction |
+| `{game_description}` | Textual game description |
+| `{game_description_long}` | Long textual game description |
+| `{placeholder}` | Description |
+
+Additional placeholders for the error prompt
+
+| Name | Value |
+|------|-------|
+| `{error_message}` | The error trace of the error to fix, including the function code |
+| `{function_name}` | The name of the function where the error occurred |
 
 
 ## Structure

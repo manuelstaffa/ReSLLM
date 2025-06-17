@@ -1,5 +1,6 @@
 from reprompt.parse_config import ConfigParser, get_active_config
 from reprompt.prompt_llm import RewardPrompter
+from reprompt.utils import read_file
 import tyro
 from dataclasses import dataclass
 from typing import Optional, Annotated, Literal
@@ -19,6 +20,9 @@ class Args:
 
     temperature: Optional[float] = None
     """Temperature for sampling."""
+
+    seed: Optional[int] = None
+    """Seed for random number generation."""
 
 
 def main():
@@ -40,7 +44,23 @@ def main():
         raise ValueError("All game names in 'env.games' must be strings.")
 
     for game in games:
-        prompter = RewardPrompter(game=game)
+        context = {
+            "game": game,
+            "model": config.get("openai.model"),
+            "temperature": config.get("openai.temperature"),
+            "seed": config.get("seed"),
+            "parent_objects": read_file("context/games/game_objects.py"),
+            "game_objects": read_file(f"context/games/{game}/game_objects.py"),
+            "ram_extraction": read_file(f"context/games/{game}/{game}.py"),
+            "game_description": read_file(f"context/games/{game}/game_description.txt"),
+            "game_description_long": read_file(
+                f"context/games/{game}/game_description_long.txt"
+            ),
+        }
+
+        prompter = RewardPrompter(
+            config=config, game=game, context=context, seed=args.seed
+        )
         prompter.master_prompt()
 
 
