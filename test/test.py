@@ -1,8 +1,8 @@
-from reprompt.utils import read_file
+from resllm.utils import read_file
 import ast
 import re
 
-text = read_file("RePrompt/conversation.txt")
+text = read_file("ReSLLM/test/conversation.txt")
 print(text)
 
 

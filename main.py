@@ -1,6 +1,6 @@
-from reprompt.parse_config import ConfigParser, get_active_config
-from reprompt.prompt_llm import RewardPrompter
-from reprompt.utils import read_file
+from resllm.parse_config import ConfigParser, get_active_config
+from resllm.prompt_llm import RewardPrompter
+from resllm.utils import read_file
 import tyro
 from dataclasses import dataclass
 from typing import Optional, Annotated, Literal

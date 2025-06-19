@@ -1,4 +1,4 @@
-# RePrompt
+# ReSLLM
 
 
 ## Important Prompt Properties
@@ -144,10 +144,10 @@ Additional placeholders for the error prompt
 
 ## Structure
 
-General file structure of RePrompt.
+General file structure of ReSLLM.
 
 ```bash
-RePrompt
+ReSLLM
 ├── context
 │   ├── config
 │   │   └── <config>.toml
@@ -164,7 +164,7 @@ RePrompt
 │           ├── conversation.txt
 │           ├── config.toml
 │           └── reward_function.py
-├── reprompt
+├── resllm
 │   ├── parse_config.py
 │   ├── prompt_llm.py
 │   └── utils.py
@@ -189,11 +189,11 @@ Specified in <config_name>.toml, with applicable overrides specified below.
 
 ## Config Parser
 
-Config Parser for RePrompt.
+Config Parser for ReSLLM.
 
 Create config parser:  
 ```python
-from reprompt.parse_config import ConfigParser
+from resllm.parse_config import ConfigParser
 
 overrides = {
     "<key>": <value>,
@@ -203,7 +203,7 @@ ConfigParser(path=args.config, overrides=overrides)
 
 Access config values:  
 ```python
-from reprompt.parse_config import get_active_config
+from resllm.parse_config import get_active_config
 
 config = get_active_config
 
@@ -216,7 +216,7 @@ config.get('<category>.<value>')
 
 Custom string formatter:
 ```python
-from reprompt.utils import format_string
+from resllm.utils import format_string
 
 context = {
     "<key>": <value>,

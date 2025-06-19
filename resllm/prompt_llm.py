@@ -1,6 +1,6 @@
-from reprompt.parse_config import ConfigParser
-from reprompt.utils import format_string
-from reprompt.extract_functions import (
+from resllm.parse_config import ConfigParser
+from resllm.utils import format_string
+from resllm.extract_functions import (
     extract_all_functions,
     remove_duplicate_functions,
     check_function_syntax,
