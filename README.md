@@ -110,7 +110,7 @@
 | Potential-Based | R'(s,a,s') = R(s,a,s') + γ * Φ(s') − Φ(s) | yes | Safe, theoretically grounded | Navigation, planning tasks |
 | State-Action PBRS | R'(s,a,s') = R(s,a,s') + γ * Φ(s',a') − Φ(s,a) | yes | More fine-grained guidance | Action-dependent environments |
 | Difference Rewards | D_i​(z) = G(z) − G(z_−i​) | yes | Reduces credit assignment issues | Multi-agent RL |
-| Policy Shaping | π'(a|s) ∝ π(a|s) * e^(β * A(s,a)) | no | Incorporates external advice | Human-in-the-loop RL, games |
+| Policy Shaping | π'(a\|s) ∝ π(a\|s) * e^(β * A(s,a)) | no | Incorporates external advice | Human-in-the-loop RL, games |
 | Heuristic Shaping | R'(s,a,s') = R(s,a,s') + H(s,a,s') | no | Fast, flexible, task-specific | Games, robotics, sparse rewards |
 | Learned Shaping | R'(s,a,s') = R(s,a,s') + f_θ​(s,a,s') | no | Learns complex task structure | Imitation learning, preference RL |
 
