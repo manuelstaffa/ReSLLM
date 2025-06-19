@@ -1,5 +1,6 @@
 # ReSLLM
 
+(Repetetive) Reward Shaping with Large Language Models
 
 ## Important Prompt Properties
 - Prompt: explanation of the function name/return for the reward function 
