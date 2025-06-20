@@ -16,7 +16,9 @@ system_prompt = """
 error_prompt = """
 """
 reward_prompt = ["""
-    """]
+"""]
+shaping_prompt = ["""
+"""]
 
 # Placeholder for context variables
 # {game}, {model}, {parent_objects}, {game_objects}, {ram_extraction}, {game_description}, {function_name}, {error_message}
