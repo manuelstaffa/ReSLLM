@@ -48,7 +48,7 @@
 | $i$ | Agent i in a multi-agent system |
 
 - Difference Rewards (D)
-  - $D_i​(z) = G(z) − G(z_{−i}​)$
+  - $D_i(z) = G(z) - G(z_{-i})$
   - Useful in multi-agent environments
   - Enables better credit assignment by showing the individual contribution of an agent
   - Reduces noise by removing the contribution of the actions of other agents
@@ -93,7 +93,7 @@
 | $f_θ(s,a,s')$ | Learned shaping reward, parameterized by θ (e.g. a neural network) |
 
 - Learned Reward Shaping
-  - $R'(s,a,s') = R(s,a,s') + f_θ​(s,a,s')$
+  - $R'(s,a,s') = R(s,a,s') + f_θ(s,a,s')$
   - Automatically encodes useful shaping information when manual reward shaping is hard
   - Useful in sparse reward environments, learning from demonstrations, or when there is no known optimal
   - Sources of Learned Reward Shaping:
@@ -111,10 +111,10 @@
 |------|----------|-------------------|----------|------------------|
 | Potential-Based | $R'(s,a,s') = R(s,a,s') + γ * Φ(s') − Φ(s)$ | yes | Safe, theoretically grounded | Navigation, planning tasks |
 | State-Action PBRS | $R'(s,a,s') = R(s,a,s') + γ * Φ(s',a') − Φ(s,a)$ | yes | More fine-grained guidance | Action-dependent environments |
-| Difference Rewards | $D_i​(z) = G(z) − G(z_{−i}​)$ | yes | Reduces credit assignment issues | Multi-agent RL |
-| Policy Shaping | $π'(a\|s) ∝ π(a\|s) * e^(β * A(s,a))$ | no | Incorporates external advice | Human-in-the-loop RL, games |
+| Difference Rewards | $D_i(z) = G(z) - G(z_{-i})$ | yes | Reduces credit assignment issues | Multi-agent RL |
+| Policy Shaping | $π'(a\|s) ∝ π(a\|s) * e^{β * A(s,a)}$ | no | Incorporates external advice | Human-in-the-loop RL, games |
 | Heuristic Shaping | $R'(s,a,s') = R(s,a,s') + H(s,a,s')$ | no | Fast, flexible, task-specific | Games, robotics, sparse rewards |
-| Learned Shaping | $R'(s,a,s') = R(s,a,s') + f_θ​(s,a,s')$ | no | Learns complex task structure | Imitation learning, preference RL |
+| Learned Shaping | $R'(s,a,s') = R(s,a,s') + f_θ(s,a,s')$ | no | Learns complex task structure | Imitation learning, preference RL |
 
 
 ## Current prompt format placeholders
