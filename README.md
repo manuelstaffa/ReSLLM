@@ -14,13 +14,13 @@
 
 | Symbol | Meaning |
 |--------|---------|
-| R(s,a,s') | Original reward function |
-| R'(s,a,s') | Updated reward function |
-| Φ | Potential function providing a measurement/immediate reward, maps state to number |
-| y | Discount factor that determines how the immediate rewards influence the total reward |
+| $R(s,a,s')$ | Original reward function |
+| $R'(s,a,s')$ | Updated reward function |
+| $Φ$ | Potential function providing a measurement/immediate reward, maps state to number |
+| $γ$ | Discount factor that determines how the immediate rewards influence the total reward |
 
 - Potential-Based Reward Shaping (PBRS)
-  - R'(s,a,s') = R(s,a,s') + γ * Φ(s') − Φ(s)
+  - $R'(s,a,s') = R(s,a,s') + γ * Φ(s') − Φ(s)$
   - Include additional potential function that grades progress to goal in addition to reward function
   - E.g. distance function as potential function in addition to reward function that awards points 
   when reaching the end
@@ -29,7 +29,7 @@
   - Helps the RL algorithm to converge faster to effective policies
   - Policy Invariance: preserves optimal policy
 - State-Action Potential-Based Shaping (PBRSA)
-  - R'(s,a,s') = R(s,a,s') + γ * Φ(s',a') − Φ(s,a)
+  - $R'(s,a,s') = R(s,a,s') + γ * Φ(s',a') − Φ(s,a)$
   - Generalization of standard PBRS that additionally incorporates actions into the potential function
   - Useful in environments where the action taken matters as much as the state
   - E.g. distance function as potential function if the player takes action to dodge an enemy attack in 
@@ -42,13 +42,13 @@
 
 | Symbol | Meaning |
 |--------|---------|
-| G(z) | Global reward for the full system configuration z |
-| z_-i | Configuration without the contribution of agent i, or a default action for agent i |
-| D_i(z) | Difference reward (how much better or worse the global reward is because of the action done by agent i) |
-| i | Agent i in a multi-agent system |
+| $G(z)$ | Global reward for the full system configuration z |
+| $z_-i$ | Configuration without the contribution of agent i, or a default action for agent i |
+| $D_i(z)$ | Difference reward (how much better or worse the global reward is because of the action done by agent i) |
+| $i$ | Agent i in a multi-agent system |
 
 - Difference Rewards (D)
-  - D_i​(z) = G(z) − G(z_−i​)
+  - $D_i​(z) = G(z) − G(z_−i​)$
   - Useful in multi-agent environments
   - Enables better credit assignment by showing the individual contribution of an agent
   - Reduces noise by removing the contribution of the actions of other agents
@@ -58,13 +58,13 @@
 
 | Symbol | Meaning |
 |--------|---------|
-| π(a\|s) | Agents original policy |
-| A(s,a) | Advice function that encodes preferences for actions in states |
-| β | Temperature/scaling factor how strong the advice is followed |
-| e^(β * A(s,a)) | Converts advice into multiplicative weighting |
+| $π(a\|s)$ | Agents original policy |
+| $A(s,a)$ | Advice function that encodes preferences for actions in states |
+| $β$ | Temperature/scaling factor how strong the advice is followed |
+| $e^{β * A(s,a)}$ | Converts advice into multiplicative weighting |
 
 - Potential-Based Advice / Policy Shaping (PBA)
-  - π'(a|s) ∝ π(a|s) * e^(β * A(s,a))
+  - $π'(a|s) ∝ π(a|s) * e^(β * A(s,a))$
   - Encourages or discourages specific actions without forcing them
   - Provides external guidance that encourages exploration toward desirable behaviors
   - Soft influence: advice biases, but does not override the learned policy
@@ -74,12 +74,12 @@
 
 | Symbol | Meaning |
 |--------|---------|
-| R(s,a,s') | Original reward function |
-| R'(s,a,s') | Updated reward function |
-| H(s,a,s') | Heuristic reward as a manually defined function |
+| $R(s,a,s')$ | Original reward function |
+| $R'(s,a,s')$ | Updated reward function |
+| $H(s,a,s')$ | Heuristic reward as a manually defined function |
 
 - Heuristic/Manual Reward Shaping
-  - R'(s,a,s') = R(s,a,s') + H(s,a,s')
+  - $R'(s,a,s') = R(s,a,s') + H(s,a,s')$
   - Accelerate learning by encouraging intermediate goals
   - Custom, manually created heuristic function designed with domain knowledge
   - Helps mitigate sparse rewards by adding incremental reward signals
@@ -88,12 +88,12 @@
 
 | Symbol | Meaning |
 |--------|---------|
-| R(s,a,s') | Original reward function |
-| R'(s,a,s') | Updated reward function |
-| f_θ(s,a,s') | Learned shaping reward, parameterized by θ (e.g. a neural network) |
+| $R(s,a,s')$ | Original reward function |
+| $R'(s,a,s')$ | Updated reward function |
+| $f_θ(s,a,s')$ | Learned shaping reward, parameterized by θ (e.g. a neural network) |
 
 - Learned Reward Shaping
-  - R'(s,a,s') = R(s,a,s') + f_θ​(s,a,s')
+  - $R'(s,a,s') = R(s,a,s') + f_θ​(s,a,s')$
   - Automatically encodes useful shaping information when manual reward shaping is hard
   - Useful in sparse reward environments, learning from demonstrations, or when there is no known optimal
   - Sources of Learned Reward Shaping
@@ -109,12 +109,12 @@
 
 | Type | Function | Policy Invariance | Strength | Typical Use Case |
 |------|----------|-------------------|----------|------------------|
-| Potential-Based | R'(s,a,s') = R(s,a,s') + γ * Φ(s') − Φ(s) | yes | Safe, theoretically grounded | Navigation, planning tasks |
-| State-Action PBRS | R'(s,a,s') = R(s,a,s') + γ * Φ(s',a') − Φ(s,a) | yes | More fine-grained guidance | Action-dependent environments |
-| Difference Rewards | D_i​(z) = G(z) − G(z_−i​) | yes | Reduces credit assignment issues | Multi-agent RL |
-| Policy Shaping | π'(a\|s) ∝ π(a\|s) * e^(β * A(s,a)) | no | Incorporates external advice | Human-in-the-loop RL, games |
-| Heuristic Shaping | R'(s,a,s') = R(s,a,s') + H(s,a,s') | no | Fast, flexible, task-specific | Games, robotics, sparse rewards |
-| Learned Shaping | R'(s,a,s') = R(s,a,s') + f_θ​(s,a,s') | no | Learns complex task structure | Imitation learning, preference RL |
+| Potential-Based | $R'(s,a,s') = R(s,a,s') + γ * Φ(s') − Φ(s)$ | yes | Safe, theoretically grounded | Navigation, planning tasks |
+| State-Action PBRS | $R'(s,a,s') = R(s,a,s') + γ * Φ(s',a') − Φ(s,a)$ | yes | More fine-grained guidance | Action-dependent environments |
+| Difference Rewards | $D_i​(z) = G(z) − G(z_−i​)$ | yes | Reduces credit assignment issues | Multi-agent RL |
+| Policy Shaping | $π'(a\|s) ∝ π(a\|s) * e^(β * A(s,a))$ | no | Incorporates external advice | Human-in-the-loop RL, games |
+| Heuristic Shaping | $R'(s,a,s') = R(s,a,s') + H(s,a,s')$ | no | Fast, flexible, task-specific | Games, robotics, sparse rewards |
+| Learned Shaping | $R'(s,a,s') = R(s,a,s') + f_θ​(s,a,s')$ | no | Learns complex task structure | Imitation learning, preference RL |
 
 
 ## Current prompt format placeholders
