@@ -43,12 +43,12 @@
 | Symbol | Meaning |
 |--------|---------|
 | $G(z)$ | Global reward for the full system configuration z |
-| $z_-i$ | Configuration without the contribution of agent i, or a default action for agent i |
+| $z_{-i}$ | Configuration without the contribution of agent i, or a default action for agent i |
 | $D_i(z)$ | Difference reward (how much better or worse the global reward is because of the action done by agent i) |
 | $i$ | Agent i in a multi-agent system |
 
 - Difference Rewards (D)
-  - $D_i​(z) = G(z) − G(z_−i​)$
+  - $D_i​(z) = G(z) − G(z_{−i}​)$
   - Useful in multi-agent environments
   - Enables better credit assignment by showing the individual contribution of an agent
   - Reduces noise by removing the contribution of the actions of other agents
@@ -64,7 +64,7 @@
 | $e^{β * A(s,a)}$ | Converts advice into multiplicative weighting |
 
 - Potential-Based Advice / Policy Shaping (PBA)
-  - $π'(a|s) ∝ π(a|s) * e^(β * A(s,a))$
+  - $π'(a|s) ∝ π(a|s) * e^{β * A(s,a)}$
   - Encourages or discourages specific actions without forcing them
   - Provides external guidance that encourages exploration toward desirable behaviors
   - Soft influence: advice biases, but does not override the learned policy
@@ -96,7 +96,7 @@
   - $R'(s,a,s') = R(s,a,s') + f_θ​(s,a,s')$
   - Automatically encodes useful shaping information when manual reward shaping is hard
   - Useful in sparse reward environments, learning from demonstrations, or when there is no known optimal
-  - Sources of Learned Reward Shaping
+  - Sources of Learned Reward Shaping:
     - Inverse Reinforcement Learning (IRL): learn the entire reward function from expert demonstrations
     - Preference-Based Reward Learning: learn from human preferences
     - Auxiliary Models: use predictive models (e.g. predicting next state) to define progress-based shaping
@@ -111,7 +111,7 @@
 |------|----------|-------------------|----------|------------------|
 | Potential-Based | $R'(s,a,s') = R(s,a,s') + γ * Φ(s') − Φ(s)$ | yes | Safe, theoretically grounded | Navigation, planning tasks |
 | State-Action PBRS | $R'(s,a,s') = R(s,a,s') + γ * Φ(s',a') − Φ(s,a)$ | yes | More fine-grained guidance | Action-dependent environments |
-| Difference Rewards | $D_i​(z) = G(z) − G(z_−i​)$ | yes | Reduces credit assignment issues | Multi-agent RL |
+| Difference Rewards | $D_i​(z) = G(z) − G(z_{−i}​)$ | yes | Reduces credit assignment issues | Multi-agent RL |
 | Policy Shaping | $π'(a\|s) ∝ π(a\|s) * e^(β * A(s,a))$ | no | Incorporates external advice | Human-in-the-loop RL, games |
 | Heuristic Shaping | $R'(s,a,s') = R(s,a,s') + H(s,a,s')$ | no | Fast, flexible, task-specific | Games, robotics, sparse rewards |
 | Learned Shaping | $R'(s,a,s') = R(s,a,s') + f_θ​(s,a,s')$ | no | Learns complex task structure | Imitation learning, preference RL |
