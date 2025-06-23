@@ -1,4 +1,4 @@
-from resllm.parse_config import ConfigParser, get_active_config
+from ReSLLM.resllm.config import ConfigParser, get_active_config
 from resllm.prompt_llm import RewardPrompter
 from resllm.utils import read_file
 import tyro

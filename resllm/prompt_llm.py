@@ -1,16 +1,18 @@
-from resllm.parse_config import ConfigParser
+from ReSLLM.resllm.config import ConfigParser
 from resllm.utils import format_string
-from resllm.extract_functions import (
+from ReSLLM.resllm.functions import (
     extract_functions,
     remove_duplicate_functions,
     check_function_syntax,
     replace_function,
     get_function_name,
 )
+from ReSLLM.resllm.core import ReSLLMEnv, run_episodes
 import os
 import shutil
 import datetime
 from openai import OpenAI
+from typing import Any
 
 
 class RewardPrompter:
@@ -177,34 +179,32 @@ class RewardPrompter:
     def _log_output(
         self,
         folder: str,
-        conversation: list[dict],
-        errors: list[str],
-        functions: list[str],
+        filename: str,
+        content: str | list,
+        delimiter: str = "\n\n",
+        overwrite: bool = False,
     ) -> None:
         """
-        Log conversation, errors, and the combined reward function code to output files.
+        Log content to a specified file in the output folder.
 
         Args:
             folder (str): Path to the output folder.
-            conversation (list of dict): List of conversation entries.
-            errors (list of str): Collected error messages, if any.
-            functions (list of str): List of extracted Python code blocks.
+            filename (str): Name of the file to write to.
+            content (str or list): Content to write. Lists will be joined with delimiter.
+            delimiter (str, optional): Separator for list content. Defaults to "\n\n".
+            overwrite (bool, optional): Whether to overwrite the file. Defaults to False (append).
         """
-        with open(os.path.join(folder, "conversation.txt"), "w") as f:
-            for entry in conversation:
-                f.write(f"{entry['role'].upper()}: {entry['content']}\n\n")
+        file_path = os.path.join(folder, filename)
 
-        if errors:
-            with open(os.path.join(folder, "errors.txt"), "w") as f:
-                f.write("\n".join(errors))
+        mode = "w" if overwrite else "a"
+        with open(file_path, mode) as f:
+            if isinstance(content, list):
+                f.write(delimiter.join(content))
+            else:
+                f.write(content)
 
-        with open(os.path.join(folder, "reward_function.py"), "w") as f:
-            f.write(f"from ocatari.ram.{self.game} import *\n\n")
-            for method in functions:
-                f.write(method + "\n\n")
-
-        with open(os.path.join(folder, "config.toml"), "w") as f:
-            f.write(str(self.config))
+            if isinstance(content, list) or not content.endswith(delimiter):
+                f.write(delimiter)
 
     def master_prompt(self):
         """
@@ -214,7 +214,9 @@ class RewardPrompter:
         ######################################################
         # Initialize conversation and output structures
         ######################################################
-        print(f"Starting prompt generation for game '{self.game}'...")
+        print(
+            f"Starting prompt generation for game '{self.game}' with config '{self.config.get('general.config_name')}'..."
+        )
         output_folder = self._create_output_folder()
         conversation = []
         generated_functions = []
@@ -261,6 +263,18 @@ class RewardPrompter:
         else:
             print(f"No valid functions generated for game '{self.game}'.")
             errors.append(f"No valid functions generated for game '{self.game}'.\n")
+
+        self._log_output(
+            output_folder,
+            "reward_function.py",
+            f"from ocatari.ram.{self.game} import *\n\n",
+            overwrite=True,
+        )
+        self._log_output(
+            output_folder,
+            "reward_function.py",
+            generated_functions,
+        )
 
         ######################################################
         # Check syntax of generated functions and fix errors
@@ -324,6 +338,18 @@ class RewardPrompter:
                     f"Error checking syntax for game '{self.game}': {str(e)}\n"
                 )
 
+        self._log_output(
+            output_folder,
+            "reward_function.py",
+            f"from ocatari.ram.{self.game} import *\n\n",
+            overwrite=True,
+        )
+        self._log_output(
+            output_folder,
+            "reward_function.py",
+            generated_functions,
+        )
+
         ######################################################
         # Check functions in HackAtari and fix errors
         ######################################################
@@ -334,5 +360,11 @@ class RewardPrompter:
         # Log all outputs: conversation, errors, and functions
         ######################################################
         print(f"Logging output for game '{self.game}' to folder: {output_folder}")
-        self._log_output(output_folder, conversation, errors, generated_functions)
+        self._log_output(output_folder, "config.toml", str(self.config))
+        self._log_output(
+            output_folder,
+            "conversation.txt",
+            [f"{e['role'].upper()}: {e['content']}" for e in conversation],
+        )
+        self._log_output(output_folder, "errors.txt", errors)
         print(f"Output logged successfully for game '{self.game}'.")
