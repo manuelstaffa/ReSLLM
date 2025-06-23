@@ -50,7 +50,7 @@ reward_prompt = [
         return reward
     ```
 
-    Please provide a single python file. Do not include any class definitions or definitions without implementation, as not to cause errors in the HackAtari environment. Do not modify the game state. The file should be in an executable format and state, so that it can be run directly in the HackAtari environment.
+    Provide only the reward function and nothing else. The function should return a float value representing the reward for the agent in the game. The reward should be designed to encourage the agent to learn effectively and efficiently.
     """,
 
     """

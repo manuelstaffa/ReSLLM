@@ -16,9 +16,9 @@ def _extract_code_blocks(text: str) -> list[str]:
     return re.findall(pattern, text, re.DOTALL)
 
 
-def _extract_functions(text: str) -> list[str]:
+def _extract_functions_from_block(text: str) -> list[str]:
     """
-    Extract function definitions from a given text.
+    Extract function definitions from a given text, including those with return annotations.
 
     Args:
         text (str): The input text containing function definitions.
@@ -27,10 +27,14 @@ def _extract_functions(text: str) -> list[str]:
         list: A list of function definitions as strings.
     """
     pattern = r"""
-        (^def\s+\w+\(.*?\):           # function header line
-        (?:\n[ \t]+.*?)*)             # indented lines of function body (including blank lines)
-        (?=^def\s|\Z)                 # lookahead for next function start or end of text
+        (^def\s+\w+                   # 'def' and function name
+        \s*\(.*?\)                    # parameters in parentheses
+        \s*(?:->\s*[^\s:]+)?          # optional return annotation (e.g., '-> float')
+        \s*:\s*                       # colon ending the function header
+        (?:\n[ \t]+.*?)*              # indented lines of function body
+        )(?=^def\s|\Z)                # lookahead for next function or end of text
     """
+
     matches = re.findall(pattern, text, re.MULTILINE | re.DOTALL | re.VERBOSE)
 
     return [m.strip("\n") for m in matches]
@@ -51,7 +55,7 @@ def get_function_name(func_code: str) -> str | None:
     return match.group(1) if match else None
 
 
-def extract_all_functions(text: str) -> list[str]:
+def extract_functions(text: str) -> list[str]:
     """
     Extract all functions from the text and check their syntax.
 
@@ -64,7 +68,7 @@ def extract_all_functions(text: str) -> list[str]:
     code_blocks = _extract_code_blocks(text)
     all_functions = []
     for block in code_blocks:
-        functions = _extract_functions(block)
+        functions = _extract_functions_from_block(block)
         for func in functions:
             all_functions.append(func)
 

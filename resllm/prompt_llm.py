@@ -1,7 +1,7 @@
 from resllm.parse_config import ConfigParser
 from resllm.utils import format_string
 from resllm.extract_functions import (
-    extract_all_functions,
+    extract_functions,
     remove_duplicate_functions,
     check_function_syntax,
     replace_function,
@@ -245,7 +245,7 @@ class RewardPrompter:
                 response_text = self._call_openai(conversation)
                 conversation.append({"role": "assistant", "content": response_text})
                 print(f"Response received for prompt {idx + 1}/{len(prompts)}.")
-                extracted_functions = extract_all_functions(response_text)
+                extracted_functions = extract_functions(response_text)
                 print(f"Extracted {len(extracted_functions)} functions from response.")
                 generated_functions.extend(extracted_functions)
         except Exception as e:
@@ -299,7 +299,7 @@ class RewardPrompter:
                         f"Response received for syntax fix attempt for game '{self.game}'."
                     )
 
-                    fixed_functions = extract_all_functions(response_text)
+                    fixed_functions = extract_functions(response_text)
                     print(
                         f"Extracted {len(fixed_functions)} fixed functions from response."
                     )
