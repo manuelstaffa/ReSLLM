@@ -1,7 +1,6 @@
 from resllm.config import ConfigParser, get_active_config
 from resllm.prompt_llm import RewardPrompter
-from resllm.utils import read_file
-from resllm.core import import_roms
+from resllm.utils import read_file, import_roms
 import os
 import tyro
 from dataclasses import dataclass

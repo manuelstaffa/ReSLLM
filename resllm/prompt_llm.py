@@ -7,7 +7,7 @@ from resllm.functions import (
     replace_function,
     get_function_name,
 )
-from resllm.core import ReSLLMEnv, run_episodes
+from resllm.core import run_episodes
 import os
 import shutil
 import datetime
@@ -351,17 +351,19 @@ class RewardPrompter:
         ######################################################
         # Check functions in HackAtari and fix errors
         ######################################################
+        """
         print(f"Validating functions in HackAtari for game '{self.game}'...")
         # TODO: Implement HackAtari integration to validate functions
-        reward_func_path = os.path.join(output_folder, "reward_function.py")
         hackatari_max_retries = self.max_retries
         while hackatari_max_retries > 0:
-            env = ReSLLMEnv(env_name=self.game, reward_func=reward_func_path)
             hackatari_errors = False
             try:
-                # TODO
+                rewardfunc_path = os.path.join(output_folder, "reward_function.py")
                 success, hackatari_rewards, hackatari_error = run_episodes(
-                    env, num_episodes=5, max_steps=1000, render=False, verbose=True
+                    game=self.game,
+                    rewardfunc_path=rewardfunc_path,
+                    num_episodes=5,
+                    obs_mode="obj",
                 )
 
                 if success:
@@ -429,7 +431,7 @@ class RewardPrompter:
             "reward_function.py",
             generated_functions,
         )
-
+        """
         ######################################################
         # Log all outputs: conversation, errors, and functions
         ######################################################

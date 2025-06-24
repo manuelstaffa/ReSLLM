@@ -1,116 +1,101 @@
-from ocatari import OCAtari
 from hackatari import HackAtari
-import numpy as np
-import subprocess
-import os
+import importlib.util
+import traceback
+from typing import Tuple, List, Optional
+import argparse
 
 
-class ReSLLMEnv(HackAtari):
-    """
-    OCAtari environment wrapper to use LLM-generated reward functions.
-    The reward function must take (objects) as input.
-    """
-
-    def __init__(
-        self, env_name: str, reward_func: str, mode: str = "revised", *args, **kwargs
-    ) -> None:
-        super().__init__(
-            env_name=f"ALE/{env_name.capitalize()}-v5",
-            mode=mode,
-            *args,
-            **kwargs,
-        )
-        if not callable(reward_func):
-            raise ValueError("reward_func must be a callable accepting objects")
-        self.reward_func = reward_func
-        self.org_return = 0
-        self._oca_step = self.step
-        self.step = self._step_with_custom_reward
-
-    def _step_with_custom_reward(
-        self, action: int | np.integer
-    ) -> tuple[np.ndarray, float, bool, bool, dict]:
-        obs, game_reward, terminated, truncated, info = self._oca_step(action)
-
-        if isinstance(game_reward, (int, float, np.integer, np.floating)):
-            self.org_return += float(game_reward)
-
-        info["org_return"] = self.org_return
-        try:
-            reward = self.reward_func(self.objects)
-        except Exception as e:
-            reward = 0
-            info["reward_error"] = str(e)
-        return obs, reward, terminated, truncated, info
-
-    def reset(self, **kwargs) -> tuple[np.ndarray, dict]:
-        obs, info = super().reset(**kwargs)
-        self.org_return = 0
-        return obs, info
+def _load_reward_function(rewardfunc_path: str):
+    spec = importlib.util.spec_from_file_location("reward_function", rewardfunc_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load spec or loader for {rewardfunc_path}")
+    reward_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(reward_module)
+    return reward_module.reward_function
 
 
 def run_episodes(
-    env: OCAtari,
-    num_episodes: int = 5,
-    max_steps: int = 5000,
-    render: bool = False,
-    verbose: bool = False,
-) -> tuple[bool, list[float], str]:
-    """
-    Runs num_episodes using the provided RLLMEnv.
-    Returns:
-    - rewards: list of total rewards per episode
-    - errors: list of errors encountered (None if no error for that episode)
-    """
-    rewards, errors = [], []
-    success = True
-
-    for ep in range(num_episodes):
-        total_reward, error = 0, None
-        obs, info = env.reset()
-        for _ in range(max_steps):
-            action = env.env.action_space.sample()  # type: ignore
-            obs, reward, terminated, truncated, info = env.step(action)
-            total_reward += reward  # type: ignore
-            if "reward_error" in info:
-                error = info["reward_error"]
-                success = False
-                break
-            if terminated or truncated:
-                break
-            if render:
-                env.render()
-        rewards.append(total_reward)
-        errors.append(error)
-        if verbose:
-            print(f"Episode {ep+1}: Reward={total_reward} | Error={error}")
-
-    errors = "\n".join(errors) if errors else ""
-
-    return success, rewards, errors
-
-
-def import_roms(rom_dir: str) -> None:
-    """
-    Imports ROMs from the specified directory using ale-import-roms.
-
-    Parameters:
-        rom_dir (str): Path to the directory containing ROM files.
-
-    Raises:
-        FileNotFoundError: If the ROM directory does not exist.
-        ValueError: If the ROM directory is not a directory.
-        RuntimeError: If importing ROMs fails.
-    """
-    if not os.path.exists(rom_dir):
-        raise FileNotFoundError(f"ROM directory '{rom_dir}' does not exist.")
-
-    if not os.path.isdir(rom_dir):
-        raise ValueError(f"ROM directory '{rom_dir}' is not a directory.")
+    game: str,
+    rewardfunc_path: str,
+    num_episodes: int = 10,
+    obs_mode: str = "dqn",
+) -> Tuple[bool, List[float], Optional[str]]:
+    rewards = []
+    error = None
 
     try:
-        subprocess.run(["ale-import-roms", rom_dir], check=True)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(
-            "Failed to import ROMs. Ensure 'ale-import-roms' is installed and the ROMs directory is correct."
-        ) from e
+        reward_fn = _load_reward_function(rewardfunc_path)
+        env = HackAtari(
+            env_name=game.capitalize(),
+            obs_mode=obs_mode,
+            rewardfunc_path=rewardfunc_path,
+            render_mode=None,
+            hud=False,
+            render_oc_overlay=False,
+        )
+
+        for _ in range(num_episodes):
+            obs, info = env.reset()
+            done = False
+            episode_reward = 0.0
+
+            while not done:
+                action = env.action_space.sample()
+                obs, reward, terminated, truncated, info = env.step(action)
+                ram = env.get_ram()
+                episode_reward += reward_fn(obs)
+                done = terminated or truncated
+
+            rewards.append(episode_reward)
+
+        env.close()
+        success = True
+
+    except Exception:
+        success = False
+        error = traceback.format_exc()
+        rewards = []
+
+    return success, rewards, error
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Run a HackAtari reward function on a given game."
+    )
+    parser.add_argument(
+        "--game", "-g", type=str, help="Name of the Atari game, e.g., 'seaquest'"
+    )
+    parser.add_argument(
+        "--rewardfunc_path", "-rf", type=str, help="Path to the reward_function.py file"
+    )
+    parser.add_argument(
+        "--num_episodes", "-ne", type=int, default=10, help="Number of episodes to run"
+    )
+    parser.add_argument(
+        "--obs_mode",
+        "-om",
+        type=str,
+        default="obj",
+        choices=["ori", "dqn", "obj"],
+        help="Observation mode",
+    )
+
+    args = parser.parse_args()
+
+    success, rewards, error = run_episodes(
+        game=args.game,
+        rewardfunc_path=args.rewardfunc_path,
+        num_episodes=args.num_episodes,
+        obs_mode=args.obs_mode,
+    )
+
+    if success:
+        print(f"Success! Rewards over {args.num_episodes} episodes:")
+        print(rewards)
+    else:
+        print(f"An error occurred:\n{error}")
+
+
+if __name__ == "__main__":
+    main()

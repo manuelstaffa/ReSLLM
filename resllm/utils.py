@@ -1,6 +1,40 @@
 import ast
 import string
 from typing import Any, Dict
+import os
+import subprocess
+
+
+def import_roms(rom_dir: str) -> None:
+    """
+    Imports ROMs from the specified directory using ale-import-roms.
+
+    Parameters:
+        rom_dir (str): Path to the directory containing ROM files.
+
+
+    Raises:
+        FileNotFoundError: If the ROM directory does not exist.
+        ValueError: If the ROM directory is not a directory.
+        RuntimeError: If importing ROMs fails.
+    """
+    if not os.path.exists(rom_dir):
+        raise FileNotFoundError(f"ROM directory '{rom_dir}' does not exist.")
+
+    if not os.path.isdir(rom_dir):
+        raise ValueError(f"ROM directory '{rom_dir}' is not a directory.")
+
+    try:
+        subprocess.run(
+            ["ale-import-roms", rom_dir],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            "Failed to import ROMs. Ensure 'ale-import-roms' is installed and the ROMs directory is correct."
+        ) from e
 
 
 def format_string(template: str, context: Dict[str, Any]) -> str:
