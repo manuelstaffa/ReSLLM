@@ -1,13 +1,13 @@
-from ReSLLM.resllm.config import ConfigParser
+from resllm.config import ConfigParser
 from resllm.utils import format_string
-from ReSLLM.resllm.functions import (
+from resllm.functions import (
     extract_functions,
     remove_duplicate_functions,
     check_function_syntax,
     replace_function,
     get_function_name,
 )
-from ReSLLM.resllm.core import ReSLLMEnv, run_episodes
+from resllm.core import ReSLLMEnv, run_episodes
 import os
 import shutil
 import datetime
@@ -106,16 +106,13 @@ class RewardPrompter:
         else:
             raise ValueError("prompt.reward_prompt must be a list of strings.")
 
-    def _get_error_prompt(
-        self, context: dict, error_message: str, function_name: str
-    ) -> str:
+    def _get_error_prompt(self, context: dict, error_message: str) -> str:
         """
         Generate an error prompt for a given game.
 
         Args:
             context (dict): Context dictionary to fill in the prompt.
             error_message (str): Error message to include in the prompt.
-            function_name (str): Function name to include in the prompt.
 
         Returns:
             str: Formatted error prompt for the game.
@@ -123,7 +120,6 @@ class RewardPrompter:
         context.update(
             {
                 "error_message": error_message,
-                "function_name": function_name,
             }
         )
 
@@ -221,6 +217,7 @@ class RewardPrompter:
         conversation = []
         generated_functions = []
         errors = []
+        rewards = []
 
         ######################################################
         # Generate initial prompt and call OpenAI API
@@ -280,7 +277,8 @@ class RewardPrompter:
         # Check syntax of generated functions and fix errors
         ######################################################
         print(f"Checking syntax of generated functions for game '{self.game}'...")
-        while self.max_retries > 0:
+        syntax_max_retries = self.max_retries
+        while syntax_max_retries > 0:
             syntax_errors = False
             try:
                 for function in generated_functions:
@@ -296,7 +294,7 @@ class RewardPrompter:
                     )
 
                     syntax_errors = True
-                    self.max_retries -= 1
+                    syntax_max_retries -= 1
 
                     print(
                         f"Attempting to fix syntax error in function: {function_name}..."
@@ -304,7 +302,6 @@ class RewardPrompter:
                     prompt_text = self._get_error_prompt(
                         self.context,
                         syntax_error if syntax_error is not None else "",
-                        function,
                     )
                     conversation.append({"role": "user", "content": prompt_text})
                     response_text = self._call_openai(conversation)
@@ -317,6 +314,7 @@ class RewardPrompter:
                     print(
                         f"Extracted {len(fixed_functions)} fixed functions from response."
                     )
+
                     if fixed_functions:
                         print(
                             f"Replacing function in generated functions for game '{self.game}'."
@@ -355,6 +353,82 @@ class RewardPrompter:
         ######################################################
         print(f"Validating functions in HackAtari for game '{self.game}'...")
         # TODO: Implement HackAtari integration to validate functions
+        reward_func_path = os.path.join(output_folder, "reward_function.py")
+        hackatari_max_retries = self.max_retries
+        while hackatari_max_retries > 0:
+            env = ReSLLMEnv(env_name=self.game, reward_func=reward_func_path)
+            hackatari_errors = False
+            try:
+                # TODO
+                success, hackatari_rewards, hackatari_error = run_episodes(
+                    env, num_episodes=5, max_steps=1000, render=False, verbose=True
+                )
+
+                if success:
+                    rewards.append(str(hackatari_rewards))
+                    continue
+
+                print(
+                    f"Error validating functions in HackAtari for game '{self.game}': {hackatari_error}"
+                )
+                errors.append(
+                    f"Error validating functions in HackAtari for game '{self.game}': {hackatari_error}\n"
+                )
+
+                hackatari_errors = True
+                hackatari_max_retries -= 1
+
+                print("Attempting to fix HackAtari error...")
+                prompt_text = self._get_error_prompt(
+                    self.context,
+                    hackatari_error if hackatari_error is not None else "",
+                )
+                conversation.append({"role": "user", "content": prompt_text})
+                response_text = self._call_openai(conversation)
+                conversation.append({"role": "assistant", "content": response_text})
+                print(
+                    f"Response received for HackAtari fix attempt for game '{self.game}'."
+                )
+
+                fixed_functions = extract_functions(response_text)
+                print(
+                    f"Extracted {len(fixed_functions)} fixed functions from response."
+                )
+
+                if fixed_functions:
+                    print(
+                        f"Replacing function in generated functions for game '{self.game}'."
+                    )
+                    for fixed_function in fixed_functions:
+                        replace_function(generated_functions, fixed_function)
+                else:
+                    print("Failed to fix error.")
+                    errors.append(
+                        f"Failed to fix error in HackAtari for game '{self.game}':\n{hackatari_error}\n"
+                    )
+
+                if not hackatari_errors:
+                    print(f"All functions work in HackAtari for game '{self.game}'.")
+                    break
+            except Exception as e:
+                print(
+                    f"Error checking HackAtari compatibility for game '{self.game}': {str(e)}"
+                )
+                errors.append(
+                    f"Error checking HackAtari compatibilty for game '{self.game}': {str(e)}\n"
+                )
+
+        self._log_output(
+            output_folder,
+            "reward_function.py",
+            f"from ocatari.ram.{self.game} import *\n\n",
+            overwrite=True,
+        )
+        self._log_output(
+            output_folder,
+            "reward_function.py",
+            generated_functions,
+        )
 
         ######################################################
         # Log all outputs: conversation, errors, and functions

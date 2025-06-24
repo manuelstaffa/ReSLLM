@@ -17,7 +17,6 @@ You are an expert in reinforcement learning and game design. Your task is to cre
 error_prompt = """
 There was an error while generating the reward function for the game {game}. 
 
-Function name: {function_name}
 Error details: {error_message}
 
 Only provide the updated function (and other functions if they are impacted by this fix).

@@ -1,6 +1,8 @@
-from ReSLLM.resllm.config import ConfigParser, get_active_config
+from resllm.config import ConfigParser, get_active_config
 from resllm.prompt_llm import RewardPrompter
 from resllm.utils import read_file
+from resllm.core import import_roms
+import os
 import tyro
 from dataclasses import dataclass
 from typing import Optional, Annotated, Literal
@@ -48,6 +50,9 @@ def main():
         raise ValueError("The 'env.games' configuration must be a list of game names.")
     if not all(isinstance(game, str) for game in games):
         raise ValueError("All game names in 'env.games' must be strings.")
+
+    rom_dir = os.path.join(os.path.dirname(__file__), "context", "roms")
+    import_roms(rom_dir)
 
     for game in games:
         """
