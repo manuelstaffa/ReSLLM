@@ -145,7 +145,7 @@ Additional placeholders for the error prompt
 
 ## Structure
 
-General file structure of ReSLLM.
+General file structure of ReSLLM (excluding git-specific files).
 
 ```bash
 ReSLLM
@@ -158,6 +158,8 @@ ReSLLM
 │           ├── game_description.txt
 │           ├── game_objects.py
 │           └── <game>.py
+├── roms
+│   └── <game>.bin
 ├── out
 │   └── <game>
 │       └── <run>
@@ -166,7 +168,9 @@ ReSLLM
 │           ├── config.toml
 │           └── reward_function.py
 ├── resllm
-│   ├── parse_config.py
+│   ├── config.py
+│   ├── core.py
+│   ├── functions.py
 │   ├── prompt_llm.py
 │   └── utils.py
 ├── secret
