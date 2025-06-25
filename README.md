@@ -152,14 +152,14 @@ ReSLLM
 ├── context
 │   ├── config
 │   │   └── <config>.toml
-│   └── games
-│       ├── game_objects.py
-│       └── <game>
-│           ├── game_description.txt
-│           ├── game_objects.py
-│           └── <game>.py
-├── roms
-│   └── <game>.bin
+│   ├── games
+│   │   ├── game_objects.py
+│   │   └── <game>
+│   │       ├── game_description.txt
+│   │       ├── game_objects.py
+│   │       └── <game>.py
+│   └── roms
+│       └── <game>.bin
 ├── out
 │   └── <game>
 │       └── <run>
