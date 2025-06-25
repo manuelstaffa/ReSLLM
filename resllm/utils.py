@@ -12,7 +12,6 @@ def import_roms(rom_dir: str) -> None:
     Parameters:
         rom_dir (str): Path to the directory containing ROM files.
 
-
     Raises:
         FileNotFoundError: If the ROM directory does not exist.
         ValueError: If the ROM directory is not a directory.
@@ -34,6 +33,26 @@ def import_roms(rom_dir: str) -> None:
     except subprocess.CalledProcessError as e:
         raise RuntimeError(
             "Failed to import ROMs. Ensure 'ale-import-roms' is installed and the ROMs directory is correct."
+        ) from e
+
+
+def autorom_accept() -> None:
+    """
+    Accept the AutoROM license agreement by running the AutoROM command.
+
+    Raises:
+        RuntimeError: If the AutoROM command fails to execute or accept the license.
+    """
+    try:
+        subprocess.run(
+            ["AutoROM --accept-license"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            "Failed to accept AutoROM license. Ensure 'AutoROM' is installed and the command is correct."
         ) from e
 
 

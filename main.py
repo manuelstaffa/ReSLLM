@@ -1,6 +1,6 @@
 from resllm.config import ConfigParser, get_active_config
 from resllm.prompt_llm import RewardPrompter
-from resllm.utils import read_file, import_roms
+from resllm.utils import read_file, import_roms, autorom_accept
 import os
 import tyro
 from dataclasses import dataclass
@@ -50,8 +50,11 @@ def main():
     if not all(isinstance(game, str) for game in games):
         raise ValueError("All game names in 'env.games' must be strings.")
 
-    rom_dir = os.path.join(os.path.dirname(__file__), "context", "roms")
-    import_roms(rom_dir)
+    try:
+        autorom_accept()
+    except Exception as e:
+        rom_dir = os.path.join(os.path.dirname(__file__), "context", "roms")
+        import_roms(rom_dir)
 
     for game in games:
         """

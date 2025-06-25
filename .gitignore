@@ -5,6 +5,9 @@ secret/*
 out/*
 !out/.gitkeep
 
+context/roms/*
+!context/roms/.gitkeep
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
