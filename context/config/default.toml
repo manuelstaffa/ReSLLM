@@ -28,6 +28,11 @@ reward_prompt = [
     Here is the parent game object:
     {parent_objects}
 
+    You can access a specific object with the following syntax:
+    ```python
+    obj = isinstance(obj, NameOfObject)
+    ```
+
     Here are the game objects that are relevant for the reward function for this game:
     {game_objects}
 
@@ -38,7 +43,8 @@ reward_prompt = [
 
     The reward function should have the following shape and name:
     ```python
-    def reward_function(game_objects) -> float:
+    def reward_function(env) -> float:
+        game_objects = env.objects
         ... 
         return reward
     ```
@@ -46,4 +52,3 @@ reward_prompt = [
     Please provide a single python file. Do not include any class definitions or definitions without implementation, as not to cause errors in the HackAtari environment. Do not modify the game state. The file should be in an executable format and state, so that it can be run directly in the HackAtari environment.
     """,
 ]
-#For testing purposes, please include a function that has a wrong syntax, as to test the error handling of the system. This function should not be used in the reward function, but should be included in the file.

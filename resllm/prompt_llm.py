@@ -351,9 +351,7 @@ class RewardPrompter:
         ######################################################
         # Check functions in HackAtari and fix errors
         ######################################################
-        """
         print(f"Validating functions in HackAtari for game '{self.game}'...")
-        # TODO: Implement HackAtari integration to validate functions
         hackatari_max_retries = self.max_retries
         while hackatari_max_retries > 0:
             hackatari_errors = False
@@ -431,7 +429,7 @@ class RewardPrompter:
             "reward_function.py",
             generated_functions,
         )
-        """
+
         ######################################################
         # Log all outputs: conversation, errors, and functions
         ######################################################

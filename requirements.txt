@@ -3,3 +3,6 @@ openai
 tyro
 argparse
 typing
+hackatari
+ocatari
+ale-py

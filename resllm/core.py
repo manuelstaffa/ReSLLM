@@ -3,6 +3,7 @@ import importlib.util
 import traceback
 from typing import Tuple, List, Optional
 import argparse
+import pygame
 
 
 def _load_reward_function(rewardfunc_path: str):
@@ -21,18 +22,21 @@ def run_episodes(
     obs_mode: str = "dqn",
 ) -> Tuple[bool, List[float], Optional[str]]:
     rewards = []
+    obss = []
     error = None
 
     try:
-        reward_fn = _load_reward_function(rewardfunc_path)
+        # reward_fn = _load_reward_function(rewardfunc_path)
         env = HackAtari(
             env_name=game.capitalize(),
             obs_mode=obs_mode,
             rewardfunc_path=rewardfunc_path,
-            render_mode=None,
+            render_mode="rgb_array",
             hud=False,
-            render_oc_overlay=False,
+            render_oc_overlay=True,
         )
+
+        pygame.init()
 
         for _ in range(num_episodes):
             obs, info = env.reset()
@@ -42,8 +46,14 @@ def run_episodes(
             while not done:
                 action = env.action_space.sample()
                 obs, reward, terminated, truncated, info = env.step(action)
-                ram = env.get_ram()
-                episode_reward += reward_fn(obs)
+                # ram = env.get_ram()
+                # obs = env.objects
+                # episode_reward += reward_fn(env)
+                # env.render(env._state_buffer_rgb[-1])
+                obss.append(obs)
+                env.render(env._state_buffer_rgb[-1])  # type: ignore
+
+                episode_reward += reward
                 done = terminated or truncated
 
             rewards.append(episode_reward)
@@ -51,10 +61,11 @@ def run_episodes(
         env.close()
         success = True
 
-    except Exception:
+    except Exception as e:
         success = False
         error = traceback.format_exc()
         rewards = []
+        print(f"An error occurred while running the episodes: {e}")
 
     return success, rewards, error
 
@@ -74,7 +85,7 @@ def main():
     )
     parser.add_argument(
         "--obs_mode",
-        "-om",
+        "-obs",
         type=str,
         default="obj",
         choices=["ori", "dqn", "obj"],

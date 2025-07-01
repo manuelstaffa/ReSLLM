@@ -50,25 +50,13 @@ def main():
     if not all(isinstance(game, str) for game in games):
         raise ValueError("All game names in 'env.games' must be strings.")
 
-    try:
+    """try:
         autorom_accept()
     except Exception as e:
         rom_dir = os.path.join(os.path.dirname(__file__), "context", "roms")
-        import_roms(rom_dir)
+        import_roms(rom_dir)"""
 
     for game in games:
-        """
-        parent_objects = read_file("context/games/game_objects.py", default="")
-        game_objects = read_file(f"context/games/{game}/game_objects.py", default="")
-        ram_extraction = read_file(f"context/games/{game}/{game}.py", default="")
-        game_description = read_file(
-            f"context/games/{game}/game_description.txt", default=""
-        )
-        game_description_long = read_file(
-            f"context/games/{game}/game_description_long.txt", default=""
-        )
-        """
-
         context = {
             "game": game,
             "model": config.get("openai.model"),
