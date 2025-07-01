@@ -277,8 +277,8 @@ class RewardPrompter:
             success, hackatari_rewards, hackatari_error = run_episodes(
                 game=self.game,
                 rewardfunc_path=rewardfunc_path,
-                num_episodes=1,
-                obs_mode="obj",
+                num_episodes=5,
+                obs_mode="dqn",
             )
 
             if success:
@@ -432,4 +432,5 @@ class RewardPrompter:
             [f"{e['role'].upper()}: {e['content']}" for e in self.conversation],
         )
         self._log_output(output_folder, "errors.txt", self.errors)
+        self._log_output(output_folder, "rewards.txt", self.rewards)
         print("Output logged successfully.")
