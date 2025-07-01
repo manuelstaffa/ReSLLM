@@ -1,9 +1,13 @@
-from hackatari import HackAtari
-import importlib.util
-import traceback
-from typing import Tuple, List, Optional
-import argparse
-import pygame
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning, module="pygame.pkgdata")
+
+from hackatari import HackAtari  # noqa: E402
+import importlib.util  # noqa: E402
+import traceback  # noqa: E402
+from typing import Tuple, List, Optional  # noqa: E402
+import argparse  # noqa: E402
+import pygame  # noqa: E402
 
 
 def _load_reward_function(rewardfunc_path: str):
@@ -27,6 +31,7 @@ def run_episodes(
 
     try:
         # reward_fn = _load_reward_function(rewardfunc_path)
+        print("Creating HackAtari environment...")
         env = HackAtari(
             env_name=game.capitalize(),
             obs_mode=obs_mode,
@@ -38,7 +43,8 @@ def run_episodes(
 
         pygame.init()
 
-        for _ in range(num_episodes):
+        for ep in range(num_episodes):
+            print(f"Running episode {ep + 1}/{num_episodes}...")
             obs, info = env.reset()
             done = False
             episode_reward = 0.0
@@ -51,11 +57,12 @@ def run_episodes(
                 # episode_reward += reward_fn(env)
                 # env.render(env._state_buffer_rgb[-1])
                 obss.append(obs)
-                env.render(env._state_buffer_rgb[-1])  # type: ignore
+                # env.render(env._state_buffer_rgb[-1])  # type: ignore
 
                 episode_reward += reward
                 done = terminated or truncated
 
+            print(f"Episode {ep + 1} finished with reward: {episode_reward}")
             rewards.append(episode_reward)
 
         env.close()
