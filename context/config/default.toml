@@ -4,6 +4,8 @@ clear = false
 
 [env]
 games = ["Freeway"]
+obs_mode = "dqn"
+num_episodes = 5
 
 [openai]
 model = "gpt-4o"

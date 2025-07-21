@@ -277,8 +277,8 @@ class RewardPrompter:
             success, hackatari_rewards, hackatari_error = run_episodes(
                 game=self.game,
                 rewardfunc_path=rewardfunc_path,
-                num_episodes=5,
-                obs_mode="dqn",
+                num_episodes=self.config.get("env.num_episodes", 5),
+                obs_mode=self.config.get("env.obs_mode", "dqn"),
             )
 
             if success:
