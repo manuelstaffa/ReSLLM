@@ -191,6 +191,7 @@ Specified in <config_name>.toml, with applicable overrides specified below.
 | `--config` `-c` | str | `<config name, filename, or path (default: default.toml)>` | Name of the config file to use |
 | `--model` | str | `<openai model (gpt-4o, gpt-4-turbo, gpt-4, gpt-3.5-turbo)>` | The OpenAI model to use |
 | `--clear` | none | `<none>` | Flag to clear previous runs for the same game with the same config |
+*argument aliases only work with tyro and python>=3.11
 
 ## Config Parser
 
