@@ -158,7 +158,7 @@ ReSLLM
 │   │       ├── game_description.txt
 │   │       ├── game_objects.py
 │   │       └── <game>.py
-│   └── roms
+│   └── roms*
 │       └── <game>.bin
 ├── out
 │   └── <game>
@@ -179,7 +179,7 @@ ReSLLM
 ├── requirements.txt
 └── README.md
 ```
-
+*optional, only required if rom installation via autorom fails
 
 ## Command Line Arguments
 
