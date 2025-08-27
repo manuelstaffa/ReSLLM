@@ -1,10 +1,11 @@
 from resllm.config import ConfigParser, get_active_config
 from resllm.prompt_llm import RewardPrompter
-from resllm.utils import read_file, import_roms, autorom_accept
-import os
+from resllm.utils import read_file  # , import_roms, autorom_accept
 import tyro
 from dataclasses import dataclass
 from typing import Optional, Annotated, Literal
+
+# import os
 
 
 @dataclass

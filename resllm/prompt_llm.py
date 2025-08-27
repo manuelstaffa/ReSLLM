@@ -12,7 +12,6 @@ import os
 import shutil
 import datetime
 from openai import OpenAI
-from typing import Any, List, Dict, Tuple, Union
 
 
 class RewardPrompter:
