@@ -33,7 +33,7 @@ def run_episodes(
         # reward_fn = _load_reward_function(rewardfunc_path)
         print("Creating HackAtari environment...")
         env = HackAtari(
-            env_name=game.capitalize(),
+            env_name=game,
             obs_mode=obs_mode,
             rewardfunc_path=rewardfunc_path,
             render_mode="rgb_array",

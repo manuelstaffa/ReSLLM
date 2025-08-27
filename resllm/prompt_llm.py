@@ -35,7 +35,7 @@ class RewardPrompter:
         """
         self.client = OpenAI(api_key=self._get_api_key())
         self.config = config
-        self.game = game.lower()
+        self.game = game
         self.context = context
         self.seed = seed
         self.model = self.config.get("openai.model")
@@ -397,7 +397,8 @@ class RewardPrompter:
             self._log_output(
                 output_folder,
                 "reward_function.py",
-                [f"from ocatari.ram.{self.game} import *"] + self.generated_functions,
+                [f"from ocatari.ram.{self.game.lower()} import *"]
+                + self.generated_functions,
                 overwrite=True,
             )
 

@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from typing import Optional, Annotated, Literal
 
 
-
 @dataclass
 class Args:
     try:
@@ -43,7 +42,6 @@ def main():
     config = get_active_config()
 
     games = config.get("env.games")
-    games = list(map(lambda game: game.lower(), games))
     if not games:
         raise ValueError("No games specified in the configuration.")
     if not isinstance(games, list):
