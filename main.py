@@ -1,6 +1,6 @@
 from resllm.config import ConfigParser, get_active_config
 from resllm.prompt_llm import RewardPrompter
-from resllm.utils import read_file  # , import_roms, autorom_accept
+from resllm.utils import read_file, format_string  # , import_roms, autorom_accept
 import tyro
 from dataclasses import dataclass
 from typing import Optional, Annotated, Literal
@@ -57,10 +57,16 @@ def main():
         import_roms(rom_dir)"""
 
     for game in games:
+        python_header = config.get(
+            "prompt.python_header", default=f"from ocatari.ram.{game.lower()} import *"
+        )
+        python_header = format_string(python_header, {"game_lower": game.lower()})
+
         context = {
             "game": game,
             "model": config.get("openai.model"),
             "temperature": config.get("openai.temperature"),
+            "python_header": python_header,
             "parent_objects": read_file("context/games/game_objects.py", default=""),
             "game_objects": read_file(
                 f"context/games/{game}/game_objects.py", default=""

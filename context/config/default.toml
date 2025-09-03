@@ -13,8 +13,24 @@ temperature = 0.7
 
 [prompt]
 max_retries = 3
+python_header = """
+from ocatari.ram.{game_lower} import *
+
+import numpy as np
+"""
 system_prompt = """
 You are an expert in reinforcement learning and game design. Your task is to create a reward function for the game {game} using the model {model}. The reward function should be designed to encourage the agent to learn effectively and efficiently.
+
+-DO: ALWAYS PROVIDE FULL PYTHON FILES
+-DO: ALWAYS PROVIDE ALL CODE, INCLUDING UNTOUCHED CODE WHEN DOING CHANGES
+-DO: INCLUDE ALL IMPORTS AND FUNCTION DEFINITIONS
+-DO: ENSURE CODE IS WELL-DOCUMENTED AND FOLLOWS BEST PRACTICES
+-DO NOT: PROVIDE PARTIAL FUNCTIONS OR INCOMPLETE CODE
+-DO NOT: INCLUDE ANY UNNECESSARY CODE OR COMMENTS
+-DO NOT: MODIFY THE GAME STATE
+-DO NOT: USE UNDEFINED VARIABLES OR FUNCTIONS
+-DO NOT: INCLUDE ANY DEBUGGING CODE OR PRINT STATEMENTS
+-DO NOT: CHANGE IMPORTS OR THE REWARD TEMPLATE
 """
 error_prompt = """
 There was an error while generating the reward function for the game {game}. 
@@ -45,8 +61,10 @@ reward_prompt = [
 
     The reward function should have the following shape and name:
     ```python
-    def reward_function(env) -> float:
-        game_objects = env.objects
+    {python_header}
+    
+    def reward_function(objects) -> float:
+        objects = objects.objects
         ... 
         return reward
     ```

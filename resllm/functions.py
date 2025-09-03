@@ -2,7 +2,7 @@ import ast
 import re
 
 
-def _extract_code_blocks(text: str) -> list[str]:
+def _extract_code(text: str) -> list[str]:
     """
     Extract code blocks from a given text.
 
@@ -40,6 +40,38 @@ def _extract_functions_from_block(text: str) -> list[str]:
     return [m.strip("\n") for m in matches]
 
 
+def extract_code(text: str) -> list[str]:
+    """
+    Extract all Python code blocks from the text.
+
+    Args:
+        text (str): The input text containing code blocks.
+
+    Returns:
+        list: A list of strings with Python code blocks.
+    """
+    return _extract_code(text)
+
+
+def check_code_syntax(code: str) -> tuple[bool, str | None]:
+    """
+    Check syntax of a Python code block.
+
+    Args:
+        code (str): The Python code block to check.
+
+    Returns:
+        tuple: (bool, str or None)
+            - True, None if syntax is valid.
+            - False, error message string if syntax error found.
+    """
+    try:
+        ast.parse(code)
+        return True, None
+    except SyntaxError as e:
+        return False, str(e)
+
+
 def get_function_name(func_code: str) -> str | None:
     """
     Extract the function name from a function code string.
@@ -65,7 +97,7 @@ def extract_functions(text: str) -> list[str]:
     Returns:
         list: A list of strings with function code.
     """
-    code_blocks = _extract_code_blocks(text)
+    code_blocks = _extract_code(text)
     all_functions = []
     for block in code_blocks:
         functions = _extract_functions_from_block(block)

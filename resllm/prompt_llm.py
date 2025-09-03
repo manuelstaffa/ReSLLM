@@ -1,11 +1,8 @@
 from resllm.config import ConfigParser
 from resllm.utils import format_string
 from resllm.functions import (
-    extract_functions,
-    remove_duplicate_functions,
-    check_function_syntax,
-    replace_function,
-    get_function_name,
+    extract_code,
+    check_code_syntax,
 )
 from resllm.core import run_episodes
 import os
@@ -41,7 +38,7 @@ class RewardPrompter:
         self.temperature = self.config.get("openai.temperature")
         self.max_retries = self.config.get("prompt.max_retries")
         self.conversation = []
-        self.generated_functions = []
+        self.generated_code = ""
         self.errors = []
         self.rewards = []
 
@@ -68,12 +65,9 @@ class RewardPrompter:
 
             return api_key
 
-    def _get_system_prompt(self, context: dict) -> str:
+    def _get_system_prompt(self) -> str:
         """
         Retrieve the system prompt from the configuration.
-
-        Args:
-            context (dict): Context dictionary to fill in the prompt.
 
         Returns:
             str: The system prompt string.
@@ -85,16 +79,19 @@ class RewardPrompter:
         if not system_prompt:
             raise ValueError("prompt.system_prompt must be defined in the config.")
 
-        system_prompt = format_string(system_prompt, context=context)
+        self.context.update(
+            {
+                "game_lower": self.game.lower(),
+            }
+        )
+
+        system_prompt = format_string(system_prompt, context=self.context)
 
         return system_prompt
 
-    def _get_prompts(self, context: dict) -> list[str]:
+    def _get_prompts(self) -> list[str]:
         """
         Generate prompt(s) for a given game based on configuration.
-
-        Args:
-            context (dict): Context dictionary to fill in the prompt.
 
         Returns:
             list of str: List of formatted prompts for the game.
@@ -105,22 +102,23 @@ class RewardPrompter:
         templates = self.config.get("prompt.reward_prompt")
 
         if isinstance(templates, list):
-            return [format_string(template, context=context) for template in templates]
+            return [
+                format_string(template, context=self.context) for template in templates
+            ]
         else:
             raise ValueError("prompt.reward_prompt must be a list of strings.")
 
-    def _get_error_prompt(self, context: dict, error_message: str) -> str:
+    def _get_error_prompt(self, error_message: str) -> str:
         """
         Generate an error prompt for a given game.
 
         Args:
-            context (dict): Context dictionary to fill in the prompt.
             error_message (str): Error message to include in the prompt.
 
         Returns:
             str: Formatted error prompt for the game.
         """
-        context.update(
+        self.context.update(
             {
                 "error_message": error_message,
             }
@@ -130,7 +128,7 @@ class RewardPrompter:
         if not template:
             raise ValueError("prompt.error_prompt must be defined in the config.")
 
-        error_prompt = format_string(template, context=context)
+        error_prompt = format_string(template, context=self.context)
 
         return error_prompt
 
@@ -204,7 +202,7 @@ class RewardPrompter:
 
     def _check_and_fix_syntax(self, output_folder: str) -> bool:
         """
-        Check the syntax of generated functions and attempt to fix any syntax errors.
+        Check the syntax of generated code and attempt to fix any syntax errors.
 
         Args:
             output_folder (str): Path to the output folder where reward_function.py is saved.
@@ -214,43 +212,43 @@ class RewardPrompter:
         """
         syntax_errors = False
         try:
-            for function in self.generated_functions:
-                success, syntax_error = check_function_syntax(function)
-                function_name = get_function_name(function)
+            reward_file = os.path.join(output_folder, "reward_function.py")
+            with open(reward_file, "r") as f:
+                code_content = f.read()
 
-                if success:
-                    continue
+            success, syntax_error = check_code_syntax(code_content)
 
-                print(f"Syntax error in function: {function_name}")
+            if success:
+                return False
+
+            print("Syntax error in code block")
+            self.errors.append(f"Syntax error in code block:\nError: {syntax_error}\n")
+            syntax_errors = True
+
+            print("Attempting to fix syntax error...")
+            prompt_text = self._get_error_prompt(
+                syntax_error if syntax_error is not None else "",
+            )
+            self.conversation.append({"role": "user", "content": prompt_text})
+            response_text = self._call_openai()
+            self.conversation.append({"role": "assistant", "content": response_text})
+            print("Response received for syntax fix attempt.")
+
+            fixed_code_blocks = extract_code(response_text)
+            print(f"Extracted {len(fixed_code_blocks)} code block from response.")
+
+            if fixed_code_blocks:
+                self._log_output(
+                    output_folder,
+                    "reward_function.py",
+                    fixed_code_blocks[0],
+                    overwrite=True,
+                )
+            else:
+                print("Failed to fix code block")
                 self.errors.append(
-                    f"Syntax error in function: {function_name}\n{function}\nError: {syntax_error}\n"
+                    f"Failed to fix code block:\nError: {syntax_error}\n"
                 )
-
-                syntax_errors = True
-
-                print(f"Attempting to fix syntax error in function: {function_name}...")
-                prompt_text = self._get_error_prompt(
-                    self.context,
-                    syntax_error if syntax_error is not None else "",
-                )
-                self.conversation.append({"role": "user", "content": prompt_text})
-                response_text = self._call_openai()
-                self.conversation.append(
-                    {"role": "assistant", "content": response_text}
-                )
-                print("Response received for syntax fix attempt.")
-
-                fixed_functions = extract_functions(response_text)
-                print(f"Extracted {len(fixed_functions)} functions from response.")
-
-                if fixed_functions:
-                    for fixed_function in fixed_functions:
-                        replace_function(self.generated_functions, fixed_function)
-                else:
-                    print(f"Failed to fix function: {function}")
-                    self.errors.append(
-                        f"Failed to fix function:\n{function}\nError: {syntax_error}\n"
-                    )
 
         except Exception as e:
             print(f"Error checking syntax: {str(e)}")
@@ -261,7 +259,7 @@ class RewardPrompter:
 
     def _check_and_fix_hackatari(self, output_folder: str) -> bool:
         """
-        Check the generated functions in HackAtari and attempt to fix errors.
+        Check the generated code in HackAtari and attempt to fix errors.
 
         Args:
             output_folder (str): Path to the output folder where reward_function.py is saved.
@@ -282,18 +280,17 @@ class RewardPrompter:
 
             if success:
                 self.rewards.append(str(hackatari_rewards))
-                print("All functions validated successfully in HackAtari.")
-                return False  # no errors
+                print("Code validated successfully in HackAtari.")
+                return False
 
-            print(f"Error validating functions in HackAtari: {hackatari_error}")
+            print(f"Error validating code in HackAtari: {hackatari_error}")
             self.errors.append(
-                f"Error validating functions in HackAtari: {hackatari_error}\n"
+                f"Error validating code in HackAtari: {hackatari_error}\n"
             )
             hackatari_errors = True
 
             print("Attempting to fix HackAtari error...")
             prompt_text = self._get_error_prompt(
-                self.context,
                 hackatari_error if hackatari_error is not None else "",
             )
             self.conversation.append({"role": "user", "content": prompt_text})
@@ -301,12 +298,16 @@ class RewardPrompter:
             self.conversation.append({"role": "assistant", "content": response_text})
             print("Response received for HackAtari fix attempt.")
 
-            fixed_functions = extract_functions(response_text)
-            print(f"Extracted {len(fixed_functions)} fixed functions from response.")
+            fixed_code_blocks = extract_code(response_text)
+            print(f"Extracted {len(fixed_code_blocks)} code block from response.")
 
-            if fixed_functions:
-                for fixed_function in fixed_functions:
-                    replace_function(self.generated_functions, fixed_function)
+            if fixed_code_blocks:
+                self._log_output(
+                    output_folder,
+                    "reward_function.py",
+                    fixed_code_blocks[0],
+                    overwrite=True,
+                )
             else:
                 print("Failed to fix HackAtari error.")
                 self.errors.append(
@@ -338,7 +339,7 @@ class RewardPrompter:
         ######################################################
         try:
             print("Getting system prompt...")
-            system_prompt = self._get_system_prompt(self.context)
+            system_prompt = self._get_system_prompt()
             self.conversation.append({"role": "system", "content": system_prompt})
         except ValueError as e:
             print(f"Error generating system prompt: {str(e)}")
@@ -348,7 +349,7 @@ class RewardPrompter:
         # Call OpenAI API to generate reward functions
         ######################################################
         try:
-            prompts = self._get_prompts(self.context)
+            prompts = self._get_prompts()
             for idx, prompt_text in enumerate(prompts):
                 print(f"Generating prompt {idx + 1}/{len(prompts)}")
                 self.conversation.append({"role": "user", "content": prompt_text})
@@ -357,31 +358,31 @@ class RewardPrompter:
                     {"role": "assistant", "content": response_text}
                 )
                 print(f"Response received for prompt {idx + 1}/{len(prompts)}.")
-                extracted_functions = extract_functions(response_text)
-                print(f"Extracted {len(extracted_functions)} functions from response.")
-                self.generated_functions.extend(extracted_functions)
+                extracted_code_blocks = extract_code(response_text)
+                print(
+                    f"Extracted {len(extracted_code_blocks)} code block from response."
+                )
 
-            if self.generated_functions:
-                self.generated_functions = remove_duplicate_functions(
-                    self.generated_functions
+                if extracted_code_blocks:
+                    self.generated_code = extracted_code_blocks[0]
+
+            if self.generated_code:
+                self._log_output(
+                    output_folder,
+                    "reward_function.py",
+                    self.generated_code,
+                    overwrite=True,
                 )
             else:
-                print("No valid functions generated.")
-                self.errors.append("No valid functions generated.")
-
-            self._log_output(
-                output_folder,
-                "reward_function.py",
-                [f"from ocatari.ram.{self.game} import *"] + self.generated_functions,
-                overwrite=True,
-            )
+                print("No valid code block generated.")
+                self.errors.append("No valid code block generated.")
 
         except Exception as e:
             print(f"Error generating prompts: {str(e)}")
             self.errors.append(f"Error generating prompts: {str(e)}")
 
         ######################################################
-        # Validate and fix generated functions
+        # Validate and fix generated code
         ######################################################
         print("Starting validation...")
 
@@ -389,33 +390,10 @@ class RewardPrompter:
             print(f"Validation attempt {attempt}/{self.max_retries}...")
 
             syntax_errors = self._check_and_fix_syntax(output_folder)
-            self.generated_functions = remove_duplicate_functions(
-                self.generated_functions
-            )
-
-            self._log_output(
-                output_folder,
-                "reward_function.py",
-                [f"from ocatari.ram.{self.game.lower()} import *"]
-                + self.generated_functions,
-                overwrite=True,
-            )
-
             hackatari_errors = self._check_and_fix_hackatari(output_folder)
-            self.generated_functions = remove_duplicate_functions(
-                self.generated_functions
-            )
-
-            self._log_output(
-                output_folder,
-                "reward_function.py",
-                [f"from ocatari.ram.{self.game} import *\n\n"]
-                + self.generated_functions,
-                overwrite=True,
-            )
 
             if not syntax_errors and not hackatari_errors:
-                print("No errors found in functions after validation.")
+                print("No errors found in code after validation.")
                 break
 
         else:

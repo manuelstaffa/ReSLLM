@@ -1,4 +1,3 @@
-import ast
 import string
 from typing import Any, Dict
 import os
@@ -107,23 +106,3 @@ def read_file(path: str, default: Any = None) -> str:
             return default
         else:
             raise FileNotFoundError(f"File not found: {path}")
-
-
-def check_function_syntax(code: str) -> tuple[bool, str | None]:
-    """
-    Check syntax of a single Python function string.
-
-    Args:
-        code (str): The Python code string of a function to check.
-
-    Returns:
-        tuple: (bool, str or None)
-            - True, None if syntax is valid.
-            - False, error message string if syntax error found.
-    """
-    try:
-        ast.parse(code)
-        return True, None
-    except SyntaxError as e:
-        error_message = f"{type(e).__name__}: {e.msg} (line {e.lineno})"
-        return False, error_message
