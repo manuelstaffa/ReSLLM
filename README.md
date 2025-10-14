@@ -1,5 +1,7 @@
 # ReSLLM
 
+(Repetetive) Reward Shaping with Large Language Models
+
 
 ## Command Line Arguments
 
@@ -13,8 +15,6 @@ Specified in <config_name>.toml, with applicable overrides specified below.
 | `--clear` | none | `<none>` | Flag to clear previous runs for the same game with the same config |
 
 *argument aliases only work with tyro and python>=3.11
-
-(Repetetive) Reward Shaping with Large Language Models
 
 
 ## Current prompt format placeholders
