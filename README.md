@@ -1,6 +1,124 @@
 # ReSLLM
 
+
+## Command Line Arguments
+
+Specified in <config_name>.toml, with applicable overrides specified below.
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `` | type | `<content>` | use |
+| `--config` `-c` | str | `<config name, filename, or path (default: default.toml)>` | Name of the config file to use |
+| `--model` | str | `<openai model (gpt-4o, gpt-4-turbo, gpt-4, gpt-3.5-turbo)>` | The OpenAI model to use |
+| `--clear` | none | `<none>` | Flag to clear previous runs for the same game with the same config |
+
+*argument aliases only work with tyro and python>=3.11
+
 (Repetetive) Reward Shaping with Large Language Models
+
+
+## Current prompt format placeholders
+
+```toml
+text = """This is a prompt for {game} with model {model}"""
+```
+
+Current placeholder options
+| Name | Value |
+|------|-------|
+| `{game}` | Current game the reward function is generated for |
+| `{model}` | Current OpenAI model |
+| `{temperature}` | Temperature to generate answers |
+| `{parent_object}` | Game object template with properties and functions |
+| `{game_objects}` | Game-specific objects |
+| `{ram_extraction}` | OC_Atari ram extraction |
+| `{game_description}` | Textual game description |
+| `{game_description_long}` | Long textual game description |
+
+Additional placeholders for the error prompt
+
+| Name | Value |
+|------|-------|
+| `{error_message}` | The error trace of the error to fix, including the function code |
+| `{function_name}` | The name of the function where the error occurred |
+
+
+## Structure
+
+General file structure of ReSLLM (excluding git-specific files).
+
+```bash
+ReSLLM
+├── context
+│   ├── config
+│   │   └── <config>.toml
+│   ├── games
+│   │   ├── game_objects.py
+│   │   └── <game>
+│   │       ├── game_description.txt
+│   │       ├── game_objects.py
+│   │       └── <game>.py
+│   └── roms*
+│       └── <game>.bin
+├── out
+│   └── <game>
+│       └── <run>
+│           ├── errors.txt
+│           ├── conversation.txt
+│           ├── config.toml
+│           └── reward_function.py
+├── resllm
+│   ├── config.py
+│   ├── core.py
+│   ├── functions.py
+│   ├── prompt_llm.py
+│   └── utils.py
+├── secret
+│   └── openai-api-key
+├── main.py
+├── requirements.txt
+└── README.md
+```
+*optional, only required if rom installation via autorom fails
+
+
+## Config Parser
+
+Config Parser for ReSLLM.
+
+Create config parser:  
+```python
+from resllm.parse_config import ConfigParser
+
+overrides = {
+    "<key>": <value>,
+}
+ConfigParser(path=args.config, overrides=overrides)  
+```
+
+Access config values:  
+```python
+from resllm.parse_config import get_active_config
+
+config = get_active_config
+
+config.get('<category>')  
+config.get('<category>.<value>')  
+# config['<category>']
+# config["<category>"]["<value>"]
+# config["<category>.<value>"]
+```
+
+Custom string formatter:
+```python
+from resllm.utils import format_string
+
+context = {
+    "<key>": <value>,
+}
+prompt = format_string("<string with {key}>", context=context)
+```
+
 
 ## Important Prompt Properties
 - Prompt: explanation of the function name/return for the reward function 
@@ -115,118 +233,3 @@
 | Policy Shaping | $π'(a\|s) ∝ π(a\|s) * e^{β * A(s,a)}$ | no | Incorporates external advice | Human-in-the-loop RL, games |
 | Heuristic Shaping | $R'(s,a,s') = R(s,a,s') + H(s,a,s')$ | no | Fast, flexible, task-specific | Games, robotics, sparse rewards |
 | Learned Shaping | $R'(s,a,s') = R(s,a,s') + f_θ(s,a,s')$ | no | Learns complex task structure | Imitation learning, preference RL |
-
-
-## Current prompt format placeholders
-
-```toml
-text = """This is a prompt for {game} with model {model}"""
-```
-
-Current placeholder options
-| Name | Value |
-|------|-------|
-| `{game}` | Current game the reward function is generated for |
-| `{model}` | Current OpenAI model |
-| `{temperature}` | Temperature to generate answers |
-| `{parent_object}` | Game object template with properties and functions |
-| `{game_objects}` | Game-specific objects |
-| `{ram_extraction}` | OC_Atari ram extraction |
-| `{game_description}` | Textual game description |
-| `{game_description_long}` | Long textual game description |
-
-Additional placeholders for the error prompt
-
-| Name | Value |
-|------|-------|
-| `{error_message}` | The error trace of the error to fix, including the function code |
-| `{function_name}` | The name of the function where the error occurred |
-
-
-## Structure
-
-General file structure of ReSLLM (excluding git-specific files).
-
-```bash
-ReSLLM
-├── context
-│   ├── config
-│   │   └── <config>.toml
-│   ├── games
-│   │   ├── game_objects.py
-│   │   └── <game>
-│   │       ├── game_description.txt
-│   │       ├── game_objects.py
-│   │       └── <game>.py
-│   └── roms*
-│       └── <game>.bin
-├── out
-│   └── <game>
-│       └── <run>
-│           ├── errors.txt
-│           ├── conversation.txt
-│           ├── config.toml
-│           └── reward_function.py
-├── resllm
-│   ├── config.py
-│   ├── core.py
-│   ├── functions.py
-│   ├── prompt_llm.py
-│   └── utils.py
-├── secret
-│   └── openai-api-key
-├── main.py
-├── requirements.txt
-└── README.md
-```
-*optional, only required if rom installation via autorom fails
-
-## Command Line Arguments
-
-Specified in <config_name>.toml, with applicable overrides specified below.
-
-| Argument | Type | Default | Description |
-|----------|------|---------|-------------|
-| `` | type | `<content>` | use |
-| `--config` `-c` | str | `<config name, filename, or path (default: default.toml)>` | Name of the config file to use |
-| `--model` | str | `<openai model (gpt-4o, gpt-4-turbo, gpt-4, gpt-3.5-turbo)>` | The OpenAI model to use |
-| `--clear` | none | `<none>` | Flag to clear previous runs for the same game with the same config |
-
-*argument aliases only work with tyro and python>=3.11
-
-## Config Parser
-
-Config Parser for ReSLLM.
-
-Create config parser:  
-```python
-from resllm.parse_config import ConfigParser
-
-overrides = {
-    "<key>": <value>,
-}
-ConfigParser(path=args.config, overrides=overrides)  
-```
-
-Access config values:  
-```python
-from resllm.parse_config import get_active_config
-
-config = get_active_config
-
-config.get('<category>')  
-config.get('<category>.<value>')  
-# config['<category>']
-# config["<category>"]["<value>"]
-# config["<category>.<value>"]
-```
-
-Custom string formatter:
-```python
-from resllm.utils import format_string
-
-context = {
-    "<key>": <value>,
-}
-prompt = format_string("<string with {key}>", context=context)
-```
