@@ -20,7 +20,11 @@ There was an error while generating the reward function for the game {game}.
 Function name: {function_name}
 Error details: {error_message}
 
-Only provide the updated function (and other functions if they are impacted by this fix).
+Provide the entire updated code, including any functions that are not affected by this fix. 
+
+Common fixes:
+'HackAtari' object is not iterable -> Include 'objects = objects.objects' at the start of the reward function.
+Access specific objects -> obj = isinstance(obj, NameOfObject)
 """
 reward_prompt = [
     """

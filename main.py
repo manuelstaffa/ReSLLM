@@ -43,6 +43,7 @@ def main():
     config = get_active_config()
 
     games = config.get("env.games")
+    games = [game.lower() for game in games]
     if not games:
         raise ValueError("No games specified in the configuration.")
     if not isinstance(games, list):

@@ -8,6 +8,8 @@ import traceback  # noqa: E402
 from typing import Tuple, List, Optional  # noqa: E402
 import argparse  # noqa: E402
 import pygame  # noqa: E402
+import io  # noqa: E402
+import sys  # noqa: E402
 
 
 def _load_reward_function(rewardfunc_path: str):
@@ -28,9 +30,14 @@ def run_episodes(
     rewards = []
     obss = []
     error = None
+    game = game.capitalize()
+
+    captured_output = io.StringIO()
+    original_stdout = sys.stdout
 
     try:
-        # reward_fn = _load_reward_function(rewardfunc_path)
+        sys.stdout = captured_output
+
         print("Creating HackAtari environment...")
         env = HackAtari(
             env_name=game,
@@ -72,7 +79,27 @@ def run_episodes(
         success = False
         error = traceback.format_exc()
         rewards = []
-        print(f"An error occurred while running the episodes: {e}")
+
+    finally:
+        sys.stdout = original_stdout
+
+        output_lines = captured_output.getvalue().split("\n")
+        hackatari_errors = [
+            line for line in output_lines if line.strip().startswith("Error")
+        ]
+        hackatari_errors = list(dict.fromkeys(hackatari_errors))
+
+        if hackatari_errors and not error:
+            error = "\n".join(hackatari_errors)
+            success = False
+        elif hackatari_errors and error:
+            error = (
+                error
+                + "\n\nNon-fatal HackAtari errors:\n"
+                + "\n".join(hackatari_errors)
+            )
+
+        print(captured_output.getvalue(), end="")
 
     return success, rewards, error
 

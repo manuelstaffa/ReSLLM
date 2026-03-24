@@ -37,14 +37,15 @@ There was an error while generating the reward function for the game {game}.
 
 Error details: {error_message}
 
-Only provide the updated function (and other functions if they are impacted by this fix).
+Provide the entire updated code, including any functions that are not affected by this fix. 
+
+Common fixes:
+'HackAtari' object is not iterable -> Include 'objects = objects.objects' at the start of the reward function.
+Access specific objects -> obj = isinstance(obj, NameOfObject)
 """
 reward_prompt = [
     """
     We want to create a reward function for playing the Atari game {game}. As a first step we want to collect functions that are helpful for understanding events that are happening in the game that could be relevant for the reward, i.e., items colliding. Then we need the actual reward function itself. In the following there will be existing game objects given, please generate functions that can be used to understand the game state. Please don't use undefined variables or functions.
-
-    Here is the parent game object:
-    {parent_objects}
 
     You can access a specific object with the following syntax:
     ```python
@@ -59,16 +60,18 @@ reward_prompt = [
 
     The functions should be written in Python and should be compatible with the HackAtari environment, which is based on the OpenAI Gym environment. Please ensure that the functions are well-documented and follow best practices for coding style. The functions should be designed to be used in a reinforcement learning context, where they can be called to retrieve information about the game state.
 
-    The reward function should have the following shape and name:
+    The reward function should have the following shape and name. Specifically include 'objects = objects.objects' at the beginning of the reward function, as otherwise it wont work in the target environment:
     ```python
     {python_header}
+
+    // optional: helper function code here
     
     def reward_function(objects) -> float:
         objects = objects.objects
-        ... 
+        // your code here 
         return reward
     ```
 
-    Please provide a single python file. Do not include any class definitions or definitions without implementation, as not to cause errors in the HackAtari environment. Do not modify the game state. The file should be in an executable format and state, so that it can be run directly in the HackAtari environment.
+    Please provide a single python file. Do not include any class definitions or definitions without implementation, as not to cause errors in the HackAtari environment. Do not modify the game state. The file should be in an executable format and state, so that it can be run directly in the HackAtari environment. 
     """,
 ]

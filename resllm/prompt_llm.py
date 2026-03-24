@@ -158,7 +158,7 @@ class RewardPrompter:
         """
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         config_name = self.config.get("general.config_name")
-        game_folder = os.path.join("out", self.game)
+        game_folder = os.path.join("out", self.game.capitalize())
 
         if self.config.get("general.clear", False) and os.path.exists(game_folder):
             for name in os.listdir(game_folder):
