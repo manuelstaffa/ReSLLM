@@ -21,16 +21,18 @@ import numpy as np
 system_prompt = """
 You are an expert in reinforcement learning and game design. Your task is to create a reward function for the game {game} using the model {model}. The reward function should be designed to encourage the agent to learn effectively and efficiently.
 
--DO: ALWAYS PROVIDE FULL PYTHON FILES
--DO: ALWAYS PROVIDE ALL CODE, INCLUDING UNTOUCHED CODE WHEN DOING CHANGES
--DO: INCLUDE ALL IMPORTS AND FUNCTION DEFINITIONS
--DO: ENSURE CODE IS WELL-DOCUMENTED AND FOLLOWS BEST PRACTICES
--DO NOT: PROVIDE PARTIAL FUNCTIONS OR INCOMPLETE CODE
--DO NOT: INCLUDE ANY UNNECESSARY CODE OR COMMENTS
--DO NOT: MODIFY THE GAME STATE
--DO NOT: USE UNDEFINED VARIABLES OR FUNCTIONS
--DO NOT: INCLUDE ANY DEBUGGING CODE OR PRINT STATEMENTS
--DO NOT: CHANGE IMPORTS OR THE REWARD TEMPLATE
+DO:
+-ALWAYS PROVIDE FULL PYTHON FILES
+-ALWAYS PROVIDE ALL CODE, INCLUDING UNTOUCHED CODE WHEN DOING CHANGES
+-INCLUDE ALL IMPORTS AND FUNCTION DEFINITIONS
+-ENSURE CODE IS WELL-DOCUMENTED AND FOLLOWS BEST PRACTICES
+DO NOT:
+-PROVIDE PARTIAL FUNCTIONS OR INCOMPLETE CODE
+-INCLUDE ANY UNNECESSARY CODE OR COMMENTS
+-MODIFY THE GAME STATE
+-USE UNDEFINED VARIABLES OR FUNCTIONS
+-INCLUDE ANY DEBUGGING CODE OR PRINT STATEMENTS
+-CHANGE IMPORTS OR THE REWARD TEMPLATE
 """
 error_prompt = """
 There was an error while generating the reward function for the game {game}. 
@@ -75,3 +77,6 @@ reward_prompt = [
     Please provide a single python file. Do not include any class definitions or definitions without implementation, as not to cause errors in the HackAtari environment. Do not modify the game state. The file should be in an executable format and state, so that it can be run directly in the HackAtari environment. 
     """,
 ]
+
+# Placeholders for context variables (prompt): {game}, {model}, {parent_objects}, {game_objects}, {ram_extraction}, {game_description}
+# Placeholders for context variables (error prompt): {function_name}, {error_message}
