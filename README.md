@@ -120,14 +120,6 @@ prompt = format_string("<string with {key}>", context=context)
 ```
 
 
-## Important Prompt Properties
-- Prompt: explanation of the function name/return for the reward function 
-- Prompt: do not to use undefined objects/variable
-- Prompt: only provide full implementations of classes nd functions (not just header/definition)
-- Prompt: do not to provide changes to game state
-- Error prompt: only provide updated functions 
-
-
 ## Reward Shaping
 
 | Symbol | Meaning |
