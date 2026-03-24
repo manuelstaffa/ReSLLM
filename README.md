@@ -5,7 +5,7 @@
 
 ## Command Line Arguments
 
-Specified in <config_name>.toml, with applicable overrides specified below.
+Specified in <config_name>.toml, with applicable overrides specified below:
 
 | Argument | Type | Value | Description |
 |----------|------|---------|-------------|
@@ -22,7 +22,7 @@ Specified in <config_name>.toml, with applicable overrides specified below.
 text = """This is a prompt for {game} with model {model}"""
 ```
 
-Current placeholder options
+Current placeholder options:
 | Name | Value |
 |------|-------|
 | `{game}` | Current game the reward function is generated for |
@@ -34,7 +34,7 @@ Current placeholder options
 | `{game_description}` | Textual game description |
 | `{game_description_long}` | Long textual game description |
 
-Additional placeholders for the error prompt
+Additional placeholders for the error prompt:
 
 | Name | Value |
 |------|-------|
@@ -44,7 +44,7 @@ Additional placeholders for the error prompt
 
 ## Structure
 
-General file structure of ReSLLM (excluding git-specific files).
+General file structure of ReSLLM (excluding git-specific files):
 
 ```bash
 ReSLLM
