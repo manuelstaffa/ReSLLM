@@ -43,7 +43,8 @@ Provide the entire updated code, including any functions that are not affected b
 
 Common fixes:
 'HackAtari' object is not iterable -> Include 'objects = objects.objects' at the start of the reward function.
-Access specific objects -> obj = isinstance(obj, NameOfObject)
+Access specific objects -> Use 'obj = isinstance(obj, NameOfObject)' to get object.
+name 'Object_Name' is not defined -> Objects in ths environment are: {game_objects}
 """
 reward_prompt = [
     """
@@ -74,9 +75,9 @@ reward_prompt = [
         return reward
     ```
 
-    Please provide a single python file. Do not include any class definitions or definitions without implementation, as not to cause errors in the HackAtari environment. Do not modify the game state. The file should be in an executable format and state, so that it can be run directly in the HackAtari environment. 
+    Please provide a single python file. Do not include any class definitions or definitions without implementation, as not to cause errors in the HackAtari environment. Do not modify the game state. The file should be in an executable format and state, so that it can be run directly in the HackAtari environment.
     """,
 ]
 
-# Placeholders for context variables (prompt): {game}, {model}, {parent_objects}, {game_objects}, {ram_extraction}, {game_description}
+# Placeholders for context variables (prompt, error prompt): {game}, {model}, {parent_objects}, {game_objects}, {ram_extraction}, {game_description}
 # Placeholders for context variables (error prompt): {function_name}, {error_message}
